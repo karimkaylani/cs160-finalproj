@@ -12,7 +12,8 @@ sdk.v3_business_search({
   term: 'food',
   categories: 'bagels',
   sort_by: 'best_match',
-  limit: '5'
+  limit: '5',
+  open_now: true
 })
   .then(({ data }) => console.log(data))
   .catch(err => console.error(err));
