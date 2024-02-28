@@ -10,7 +10,7 @@ sdk.auth(process.env.YELP_API_KEY);
 sdk.v3_business_search({
   location: '94704',
   term: 'food',
-  categories: 'bagels',
+  categories: '',
   sort_by: 'best_match',
   limit: '5',
   open_now: true
