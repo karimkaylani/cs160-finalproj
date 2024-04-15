@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.config.update(SECRET_KEY=os.urandom(24))
+app.config.update(SECRET_KEY=os.getenv("FLASK_SECRET_KEY", os.urandom(24)))
 
 @app.route("/")
 def home():
@@ -20,7 +20,7 @@ def home():
 
 @app.route("/login")
 def login():
-    return render_template("login.html")
+    return render_template("login.html", url=request.host_url)
 
 @app.route("/login/google", methods=["POST", "GET"])
 def google_login():
