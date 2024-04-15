@@ -43,3 +43,8 @@ def callback():
         res = supabase.auth.exchange_code_for_session({"auth_code": code})
 
     return redirect(next)
+
+@app.route("/logout")
+def logout():
+    supabase.auth.sign_out()
+    return redirect("/login")
