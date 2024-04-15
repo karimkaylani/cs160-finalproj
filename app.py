@@ -24,7 +24,6 @@ def login():
 
 @app.route("/login/google", methods=["POST", "GET"])
 def google_login():
-    print(request.host_url)
     res = supabase.auth.sign_in_with_oauth(
         {
             "provider": "google",
