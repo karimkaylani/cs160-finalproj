@@ -63,3 +63,8 @@ main, body, html {
 .auth-option:hover {
     opacity: 0.9; 
 }
+
+
+iframe {
+    transform: scale(1.75);
+}
