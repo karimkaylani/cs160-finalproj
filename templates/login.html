@@ -1,4 +1,24 @@
 {% extends 'base.html' %} {% block content %}
+
+<div class="container">
+  <div class="logo">
+    <img src="{{ url_for('static', filename='images/palate_pic.png') }}" alt="Palate Logo" />
+    <h1>palate</h1>
+  </div>
+  <p class="tagline">Quickly find where to eat!</p>
+  <div class="auth-buttons">
+    <div
+    class="g_id_signin"
+    data-type="standard"
+    data-shape="pill"
+    data-theme="outline"
+    data-text="signin_with"
+    data-size="large"
+    data-logo_alignment="center"
+    data-width="400px"
+  ></div>
+</div>
+
 <div
   id="g_id_onload"
   data-client_id="55228616089-rgch96kcg1vp1v49gp9po47adgegu2si.apps.googleusercontent.com"
@@ -6,16 +26,6 @@
   data-ux_mode="popup"
   data-login_uri="{{ url + 'login/google' }}"
   data-auto_prompt="false"
-></div>
-
-<div
-  class="g_id_signin"
-  data-type="standard"
-  data-shape="pill"
-  data-theme="outline"
-  data-text="signin_with"
-  data-size="large"
-  data-logo_alignment="left"
 ></div>
 <script src="https://accounts.google.com/gsi/client" async></script>
 {% endblock %}

@@ -1,0 +1,65 @@
+main, body, html {
+    height: 100%;
+    margin: 0;
+    background-color: #F5F5DC;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    width: 100%; 
+    max-width: 600px; 
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: space-between; 
+    height: 80%;
+    padding: 10px; 
+}
+
+.logo {
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    gap: 10px; 
+    margin-top: 5%; 
+}
+
+.logo img {
+    height: 90px; 
+    width: auto; 
+}
+
+.logo h1 {
+    font-family: Inrina, serif;
+    font-size: 5em; 
+    margin: 0; 
+}
+
+.tagline {
+    font-family: Inrina, sans-serif;
+    font-size: 3em;
+    margin: 20px 0; 
+    color: #6c6c6c; 
+}
+
+.auth-options {
+    margin-bottom: 5%; 
+}
+
+.sign-in {
+    height: 45px; 
+    width: auto; 
+}
+
+.auth-option {
+    width: 240px; 
+    margin-bottom: 20px; 
+    cursor: pointer;
+    display: block; 
+}
+
+.auth-option:hover {
+    opacity: 0.9; 
+}
