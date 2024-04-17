@@ -10,7 +10,10 @@ app.config.update(SECRET_KEY=os.getenv("FLASK_SECRET_KEY", os.urandom(24)))
 
 @app.route("/")
 def home():
-    data = supabase.auth.get_user()
+    try:
+        data = supabase.auth.get_user()
+    except:
+        return redirect("/login")
     if not data:
         return redirect("/login")
     id = data.user.id
