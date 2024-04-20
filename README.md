@@ -21,4 +21,5 @@ $ pip install -r requirements.txt
 
 ```
 flask run --host=localhost --port=3000
+python3 -m flask run --host=localhost --port=3000  
 ```

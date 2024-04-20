@@ -1,5 +1,37 @@
 {% extends 'base.html' %} {% block content %}
-<p>Signed in as {{ user }}</p>
-<h2>Preferences</h2>
-<p>{{ prefs }}</p>
+
+<nav>
+    <div></div>
+    <div class="logo-container">
+        <img src="{{ url_for('static', filename='images/palate_pic.png') }}" alt="Palate Logo" />
+        <h1>&nbsp;palate</h1>
+    </div>
+    <div class="user-options-container"><p>Hi, {{ user }}!</p>&nbsp;<i class="fa fa-gear"></i></div>
+</nav>
+
+<section>
+
+    <div class="user-results">
+        <div class="result-card"></div>
+        <div class="result-card"></div>
+        <div class="result-card"></div>
+    </div>
+
+    <div class="user-groups">
+        <div class="selected-users">
+            <div class="user-card"></div>
+            <div class="user-card"></div>
+        </div>
+        <div class="user-groups-options">
+            <i class="fa fa-plus"></i>
+            <i class="fa fa-save"></i>
+        </div>
+        <div class="refresh-options">
+            
+        </div>
+    </div>
+
+</section>
+
+
 {% endblock %}
