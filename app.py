@@ -61,6 +61,10 @@ def logout():
     supabase.auth.sign_out()
     return redirect("/login")
 
+@app.route("/preferences")
+def preferences():
+    return render_template("preferences.html")
+
 '''
 API Endpoints
 

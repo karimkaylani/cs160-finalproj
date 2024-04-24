@@ -64,7 +64,6 @@
         <button type="button" id="savePreferences" onclick="submitPreferences()">Save</button>
     </form>
 </div>
-{% endblock %}
 
 <script>
     async function submitPreferences() {
@@ -144,4 +143,8 @@
             form.elements['other'].value = preferences.other;
         }
 }
+
+    getAndSetPreferences();
 </script>
+
+{% endblock %}
