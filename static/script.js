@@ -12,7 +12,7 @@ async function setPreferences(
     dietary_restrictions,
     other,
   };
-    await fetch("/preferences", {
+    await fetch("/api/preferences", {
         method: "POST",
         headers: {
         "Content-Type": "application/json",
@@ -22,7 +22,7 @@ async function setPreferences(
 }
 
 async function getPreferences() {
-    const response = await fetch("/preferences", {
+    const response = await fetch("/api/preferences", {
         method: "GET",
         headers: {
         "Content-Type": "application/json",
