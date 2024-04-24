@@ -69,19 +69,25 @@ def preferences():
 API Endpoints
 
 /api/preferences:
-    POST: set user preferences (preferred_price, max_distance, preferred_cuisine, dietary_restrictions)
+    POST: set/update user preferences (preferred_price, max_distance, preferred_cuisine, dietary_restrictions)
     GET: get user preferences
 
 /api/groups:
     POST: create a new group for user (name, members)
     GET: get all groups for user
+    UPDATE: update a group (group_id, name, members)
+    DELETE: delete a group (group_id)
 
 /api/favorites:
     POST: add a restaurant to user favorites (restaurant_id)
     GET: get all user favorites
+    DELETE: remove a restaurant from user favorites (restaurant_id)
 
 /api/user/<id>:
     GET: get user by id (user_id)
+/api/user/search/<name>:
+    GET: search for user by name (query)
+
 '''
 @app.route("/api/preferences", methods=["POST"])
 def set_preferences():
@@ -129,9 +135,21 @@ def create_group():
     required_args = ['name', 'members']
     if args is None or not all(arg in args for arg in required_args):
         return f"Please supply all required arguments\n{required_args}", 404
-    group = supabase.table("groups").insert(
+    group = supabase.table("groups").upsert(
         {"name": args['name'], "owner_id": id, "members": args["members"]}
     ).execute()
+    return jsonify(group)
+
+@app.route("/api/groups", methods=["DELETE"])
+def delete_group():
+    data = supabase.auth.get_user()
+    if not data:
+        return "User not authenticated", 401
+    args = request.json
+    required_args = ['group_id']
+    if args is None or not all(arg in args for arg in required_args):
+        return f"Please supply all required arguments\n{required_args}", 404
+    group = supabase.table("groups").delete().eq("group_id", args['group_id']).execute()
     return jsonify(group)
 
 @app.route("/api/favorites", methods=["POST"])
@@ -168,9 +186,38 @@ def get_favorites():
         return "No favorites found", 404
     return jsonify(favorites.data)
 
+@app.route("/api/favorites", methods=["DELETE"])
+def remove_favorite():
+    data = supabase.auth.get_user()
+    if not data:
+        return "User not authenticated", 401
+    id = data.user.id
+    args = request.json
+    required_args = ['restaurant_id']
+    if args is None or not all(arg in args for arg in required_args):
+        return f"Please supply all required arguments\n{required_args}", 404
+    favorites = supabase.table("favorites").select("favorites").eq("user_id", id).execute()
+    if favorites.data is None:
+        return "No favorites found", 404
+    favorites = favorites.data
+    if args['restaurant_id'] not in favorites:
+        return "Restaurant not in favorites", 400
+    favorites.remove(args['restaurant_id'])
+    favorite = supabase.table("favorites").upsert(
+        {"user_id": id, "restaurant_id": favorites}
+    ).execute()
+    return jsonify(favorite)
+
 @app.route("/api/user/<id>", methods=["GET"])
 def get_user(id):
     user = supabase.table("users").select("*").eq("user_id", id).limit(1).execute()
     if user.data is None:
         return "User not found", 404
     return jsonify(user.data[0])
+
+@app.route("/api/user/search/<name>", methods=["GET"])
+def search_user(name):
+    users = supabase.table("users").select("*").ilike("name", f"%{name}%").limit(5).execute()
+    if users.data is None:
+        return "No users found", 404
+    return jsonify(users.data)
