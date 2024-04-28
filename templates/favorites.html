@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Favorites</h2>
+    <div id="favoritesList" class="user-results-favorites">
+
+    </div>
+</div>
+
+<script >
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadFavorites();
+});
+
+function loadFavorites() {
+    fetch('/api/favorites', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then(response => response.json())
+      .then(favorites => {
+          const favoritesList = document.getElementById('favoritesList');
+          favoritesList.innerHTML = ''; 
+          favorites.forEach(favorite => {
+              const cardHtml = createFavoriteCard(favorite);
+              favoritesList.innerHTML += cardHtml;
+          });
+          attachRemoveFavoriteListeners();
+      });
+}
+
+function createFavoriteCard(restaurant) {
+    return `
+        <div class="result-card">
+            <div class="result-card-image" style="background-image: url(${restaurant.imagePath});">
+                <i class="fa fa-star remove-option" data-restaurant-id="${restaurant.id}"></i>
+            </div>
+            <div class="result-card-desc">
+                <h1>${restaurant.name}</h1>
+                <h2>${restaurant.address}</h2>
+                <h3>${restaurant.cuisineType}</h3>
+                <div class="stars-container">
+                    ${generateStars(restaurant.stars)}
+                    <p class="stars-counter">(${restaurant.reviewCount})</p>
+                </div>
+            </div>
+        </div>
+        `;
+}
+
+function generateStars(stars) {
+    let starsHtml = '';
+    for (let i = 0; i < 5; i++) {
+        if (i < stars) {
+            starsHtml += '<i class="fa fa-star"></i>';
+        } else {
+            starsHtml += '<i class="fa fa-star-o"></i>';
+        }
+    }
+    return starsHtml;
+}
+
+function attachRemoveFavoriteListeners() {
+    document.querySelectorAll('.result-card-image .remove-option').forEach(star => {
+        star.addEventListener('click', function() {
+            const restaurantId = this.getAttribute('data-restaurant-id');
+            removeFavorite(restaurantId, this.closest('.col-md-4'));
+        });
+    });
+}
+
+function removeFavorite(restaurantId, cardElement) {
+    fetch(`/api/favorites/${restaurantId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then(response => {
+        if (response.ok) {
+            cardElement.remove(); 
+        }
+    });
+}
+
+
+
+</script>
+{% endblock %}

@@ -1,68 +1,73 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="sidebar">
-    <a href="/profile">Profile</a>
-    <a href="/preferences">Food preferences</a>
-    <a href="/groups">Groups</a>
-    <a href="/favorites">Favorites</a>
-</div>
-
-<div class="preferences-container">
-    <h2 class="preferences-title">preferences quiz</h2>
-    <form id="preferencesForm" class="preferences-form">
-        <div class="form-group">
-            <label for="preferredPrice">Preferred Price</label>
-            <select id="preferredPrice" name="preferred_price" required>
-                <option value="$">$</option>
-                <option value="$$">$$</option>
-                <option value="$$$">$$$</option>
-                <option value="$$$$">$$$$</option>
-            </select>
+<div class="container mt-5">
+    <div class="row">
+        <!--
+        <div class="col-md-3">
+            <div class="list-group">
+                <a href="/profile" class="list-group-item list-group-item-action">Profile</a>
+                <a href="/preferences" class="list-group-item list-group-item-action active">Food preferences</a>
+                <a href="/groups" class="list-group-item list-group-item-action">Groups</a>
+                <a href="/favorites" class="list-group-item list-group-item-action">Favorites</a>
+            </div>
         </div>
-
-        <div class="form-group">
-            <label for="maxDistance">Maximum Distance (miles)</label>
-            <input type="number" id="maxDistance" name="max_distance" required>
+        -->
+        <div class="col-md-9">
+            <h2 class="mb-4">Preferences Quiz</h2>
+            <form id="preferencesForm">
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="preferredPrice">Preferred Price</label>
+                        <select id="preferredPrice" name="preferred_price" class="form-control" required>
+                            <option value="$">$</option>
+                            <option value="$$">$$</option>
+                            <option value="$$$">$$$</option>
+                            <option value="$$$$">$$$$</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="maxDistance">Maximum Distance (miles)</label>
+                        <input type="number" id="maxDistance" name="max_distance" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="cuisinePreferences">Cuisine Preferences</label>
+                    <select id="cuisinePreferences" name="preferred_cuisine" class="form-control" multiple required>
+                    <!--<select id="cuisinePreferences" name="preferred_cuisine" class="data-mdb-select-init" multiple> -->
+                        <option value="American">American</option>
+                        <option value="Chinese">Chinese</option>
+                        <option value="Cuban">Cuban</option>
+                        <option value="Greek">Greek</option>
+                        <option value="Indian">Indian</option>
+                        <option value="Italian">Italian</option>
+                        <option value="Japanese">Japanese</option>
+                        <option value="Korean">Korean</option>
+                        <option value="Mexican">Mexican</option>
+                        <option value="Thai">Thai</option>
+                        <option value="Vietnamese">Vietnamese</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="dietaryRestrictions">Dietary Restrictions</label>
+                    <select id="dietaryRestrictions" name="dietary_restrictions" class="form-control" multiple>
+                        <option value="Nut Allergy">Nut Allergy</option>
+                        <option value="Gluten-Free">Gluten-Free</option>
+                        <option value="Vegetarian">Vegetarian</option>
+                        <option value="Vegan">Vegan</option>
+                        <option value="Kosher">Kosher</option>
+                        <option value="Seafood Allergy">Seafood Allergy</option>
+                        <option value="Dairy-Free">Dairy-Free</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="otherPreferences">Other Preferences</label>
+                    <textarea id="otherPreferences" name="other" class="form-control" placeholder="Put any other preferences you may have here!"></textarea>
+                </div>
+                <button type="button" id="savePreferencesButton" class="btn btn-primary">Save</button>
+            </form>
         </div>
-
-        <div class="form-group">
-            <label for="cuisinePreferences">Cuisine Preferences</label>
-            <select id="cuisinePreferences" name="preferred_cuisine" multiple required>
-                <option value="American">American</option>
-                <option value="Chinese">Chinese</option>
-                <option value="Cuban">Cuban</option>
-                <option value="Greek">Greek</option>
-                <option value="Indian">Indian</option>
-                <option value="Italian">Italian</option>
-                <option value="Japanese">Japanese</option>
-                <option value="Korean">Korean</option>
-                <option value="Mexican">Mexican</option>
-                <option value="Thai">Thai</option>
-                <option value="Vietnamese">Vietnamese</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="dietaryRestrictions">Dietary Restrictions</label>
-            <select id="dietaryRestrictions" name="dietary_restrictions" multiple>
-                <option value="Nut Allergy">Nut Allergy</option>
-                <option value="Gluten-Free">Gluten-Free</option>
-                <option value="Vegetarian">Vegetarian</option>
-                <option value="Vegan">Vegan</option>
-                <option value="Kosher">Kosher</option>
-                <option value="Seafood Allergy">Seafood Allergy</option>
-                <option value="Dairy-Free">Dairy-Free</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="otherPreferences">Other Preferences</label>
-            <textarea id="otherPreferences" name="other" placeholder="Put any other preferences you may have here!"></textarea>
-        </div>
-
-        <button type="button" id="savePreferences" onclick="submitPreferences()">Save</button>
-    </form>
+    </div>
 </div>
 
 <script>
