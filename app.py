@@ -65,6 +65,14 @@ def logout():
 def preferences():
     return render_template("preferences.html")
 
+@app.route("/groups")
+def groups():
+    return render_template("groups.html")
+
+@app.route("/favorites")
+def favorites():
+    return render_template("favorites.html")
+
 '''
 API Endpoints
 

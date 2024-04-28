@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Groups</h2>
+    <div id="groupsList" class="list-group">
+    </div>
+    
+</div>
+
+<script >
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadGroups();
+});
+
+function loadGroups() {
+    fetch('/api/groups', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then(response => response.json())
+      .then(groups => {
+          const groupsList = document.getElementById('groupsList');
+          groupsList.innerHTML = ''; 
+          groups.forEach(group => {
+              const groupItem = createGroupElement(group);
+              groupsList.appendChild(groupItem);
+          });
+      });
+}
+
+function createGroupElement(group) {
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'list-group-item d-flex justify-content-between align-items-center';
+    groupDiv.innerHTML = `
+        <span class="group-name">${group.name}</span>
+        <span>
+            <i class="action-icons fas fa-edit" onclick="editGroup(${group.id})"></i>
+            <i class="action-icons fas fa-user-edit" onclick="renameGroup(${group.id})"></i>
+            <i class="action-icons fas fa-trash-alt" onclick="deleteGroup(${group.id})"></i>
+        </span>
+    `;
+    return groupDiv;
+}
+/*
+function editGroup(groupId) {
+    
+}
+*/
+function renameGroup(groupId) {
+    console.log('Renaming group', groupId);
+    const newName = prompt('Enter new group name:');
+    if (newName) {
+        fetch('/api/groups', { 
+            method: 'POST', 
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ group_id: groupId, name: newName })
+        }).then(response => {
+            if (response.ok) {
+                loadGroups(); 
+            } else {
+                console.error('Error renaming group.');
+            }
+        }).catch(error => {
+            console.error('Error renaming group:', error);
+        });
+    }
+}
+
+function deleteGroup(groupId) {
+    if (confirm('Are you sure you want to delete this group?')) {
+        fetch(`/api/groups/${groupId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(response => {
+            if (response.ok) {
+                loadGroups(); 
+            }
+        });
+    }
+}
+
+
+
+</script>
+{% endblock %}
