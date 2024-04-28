@@ -71,12 +71,14 @@
 </div>
 
 <script>
+    const savePreferencesButton = document.getElementById('savePreferencesButton');
+    savePreferencesButton.addEventListener('click', submitPreferences);
     async function submitPreferences() {
         const form = document.getElementById('preferencesForm');
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
         data.preferred_cuisine = formData.getAll('preferred_cuisine');
-        data.dietary_restrictions = formData.getAll('dietary_restrictions');
+        data.dietary_restrictions = formData.getAll('dietary_restrictions');        
 
         try {
         const response = await fetch("/api/preferences", {

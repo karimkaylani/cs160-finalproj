@@ -44,33 +44,17 @@
 
     <div class="user-results" id="restaurantCards" position=absolute></div>
 
-<section>
-
-<div position=absolute>
-
-    <button onclick="callFoodApi()">Call food API</button>
-    <button onclick="callTextApi()">Call Text API</button>
-
-    <div class="result-card" id="textApiResult">
-        <h2>Text API Result</h2>
-        <textarea rows="20" id="text-result" readonly></textarea>
-    </div>
-
-    <div class="result-card" id="foodApiResult" style="height: 800px;">
-        <h3>Food API Result</h3>
-        <p rows="100" id="food-result" class="result-text" readonly></p>
-    </div>
-
-</section>
-
 
     <script>
-
-        let terms, userLocation, price_preference, cuisine_preference, dietary_preference;
-// Declare global variables
-        let candidate_restaurants_list_str;
-
         // Your other functions
+
+        const refreshButton = document.querySelector('.refresh-options button');
+        refreshButton.addEventListener('click', generate);
+
+        async function generate() {
+            const restaurantData = await callFoodApi();
+            await callTextApi(restaurantData);
+        }
 
         function getMeters(miles) {
             return Math.round(miles*1609.344);
@@ -89,16 +73,14 @@
         }
 
         async function getYelpResults(url) {
-            const foodApiResult = document.getElementById("food-result");
             const response = await fetch(`/api/yelp_search?url=${encodeURIComponent(url)}`)
-            let output = await response.json();
-            if (output) {
+            if (response.ok) {
+                let output = await response.json();
                 console.log('Loaded from cache!')
-                foodApiResult.innerText = JSON.stringify(output, null, 4);
-                return
+                return JSON.stringify(output, null, 4);
             }
             const apiKey = 'a0Wnk-q_xlBU4KO0TF-JB-4qmMB6QoLsMhIecm5-0Jp9p3H-1y1hJwYfVO_Nc26P6OEKgncpT_TL5Csgvnf4CSeGagYCzQcKx9EDkMaUx21qte9RnFFwmQVEUAMeZnYx';
-            fetch(url, {
+            return fetch(url, {
                 headers: {
                     'Authorization': `Bearer ${apiKey}`
                 }
@@ -108,11 +90,11 @@
                 const candidate_restaurants_list = data.businesses.slice(0, 10);  //using 5 for lower cost while testing
                 setYelpResults(url, candidate_restaurants_list);
                 const candidate_restaurants_list_str = JSON.stringify(candidate_restaurants_list, null, 4);
-                foodApiResult.innerText = candidate_restaurants_list_str;
-                console.log(candidate_restaurants_list)
+                return candidate_restaurants_list_str;
             })
             .catch(error => {
                 console.error('Error:', error);
+                return "";
             });
         }
 
@@ -131,9 +113,6 @@
         }
 
         async function callFoodApi() {
-            const foodApiResult = document.getElementById("food-result");
-            foodApiResult.value = ""; // Clear previous cards
-
             //todo: use user location
             let prefs = await getPreferences();
             prefs = prefs.preferences;
@@ -142,7 +121,7 @@
             // Call Yelp API
             const url = `https://cors-anywhere.herokuapp.com/https://api.yelp.com/v3/businesses/search?term=${prefs.preferred_cuisine}&location=${userLocation}&price=${getPrefferedPrice(prefs.preferred_price)}&open_now=true&limit=10`;
 
-            getYelpResults(url);
+            return await getYelpResults(url);
         }
 
         async function getPreferences() {
@@ -155,16 +134,17 @@
             return await response.json();
         }
         
-        async function callTextApi() {
-            candidate_restaurants_list_str = document.getElementById("food-result").innerText;
+        async function callTextApi(restaurantData) {
+            candidate_restaurants_list_str = restaurantData
 
             //todo: use ALL group preferences
             let prefs = await getPreferences();
             prefs = prefs.preferences;
             price_preference = prefs.preferred_price
             cuisine_preference = prefs.preferred_cuisine
-            dietary_preference = prefs.dietary_preference
+            dietary_preference = prefs.dietary_restrictions
             radius = prefs.max_distance
+            other_preference = prefs.other
 
             // Use the same candidate_restaurants_list variable here
             if (!candidate_restaurants_list_str || candidate_restaurants_list_str.split(/\s+/).length <= 100) {
@@ -187,13 +167,12 @@
                         "cuisine_preference": cuisine_preference,
                         "dietary_preference": dietary_preference,
                         "candidate_restaurant_list": candidate_restaurants_list_str,
-                        "radius": radius
+                        "radius": radius,
+                        "other_preference": other_preference
                     }),
                 }
             );
             const textResponse = await response.text();
-            document.getElementById("text-result").value = textResponse;
-            console.log(textResponse)
 
             // Parse text API response and display top 3 restaurants
             const top3Restaurants = parseTop3Restaurants(textResponse);
@@ -214,14 +193,14 @@
                 
                 // Check if all required fields are present
                 if (idMatch && nameMatch && addressMatch && urlMatch && reasonMatch) {
-                    const id = idMatch[1];
-                    const name = nameMatch[1];
-                    const address = addressMatch[1];
-                    const url = urlMatch[1];
+                    const id = idMatch ? idMatch[1] : "";
+                    const name = nameMatch ? nameMatch[1] : "";
+                    const address = addressMatch ? addressMatch[1] : "";
+                    const url = urlMatch ? urlMatch[1] : "";
                     const imgurl = imgurlMatch ? imgurlMatch[1] : "";
-                    const rating = ratingMatch[1];
-                    const rcount = rcountMatch[1];
-                    const reason = reasonMatch[1];
+                    const rating = ratingMatch ? ratingMatch[1] : "";
+                    const rcount = rcountMatch ? rcountMatch[1] : "";
+                    const reason = reasonMatch ? reasonMatch[1] : "";
                     return { id: id, name: name, address: address, url: url, imgurl: imgurl, rating: rating, rcount: rcount, reason: `Reason: ${reason}` };
                 } else {
                     // If any required field is missing, return null
