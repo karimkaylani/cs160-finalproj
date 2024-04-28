@@ -83,7 +83,7 @@ API Endpoints
 /api/groups:
     POST: create a new group for user (name, members)
     GET: get all groups for user
-    UPDATE: update a group (group_id, name, members)
+    POST: update a group (group_id, name, members)
     DELETE: delete a group (group_id)
 
 /api/favorites:
@@ -95,6 +95,11 @@ API Endpoints
     GET: get user by id (user_id)
 /api/user/search/<name>:
     GET: search for user by name (query)
+
+/api/yelp_search:
+    POST: save yelp search (url, results)
+/api/yelp_search/<url>:
+    GET: get yelp search by url
 
 '''
 @app.route("/api/preferences", methods=["POST"])
@@ -144,7 +149,7 @@ def create_group():
     if args is None or not all(arg in args for arg in required_args):
         return f"Please supply all required arguments\n{required_args}", 404
     group = supabase.table("groups").upsert(
-        {"name": args['name'], "owner_id": id, "members": args["members"]}
+        {"id": args.group_id, "name": args['name'], "owner_id": id, "members": args["members"]}
     ).execute()
     return jsonify(group)
 
@@ -229,3 +234,23 @@ def search_user(name):
     if users.data is None:
         return "No users found", 404
     return jsonify(users.data)
+
+@app.route("/api/yelp_search", methods=["POST"])
+def save_search():
+    data = request.json
+    required_args = ['url', 'results']
+    if data is None or not all(arg in data for arg in required_args):
+        return f"Please supply all required arguments\n{required_args}", 404
+    search = supabase.table("yelp_search").upsert(
+        {"url": data['url'], "yelp_response": data['results']}
+    ).execute()
+    return jsonify("Success")
+
+@app.route("/api/yelp_search", methods=["GET"])
+def get_search():
+    url = request.args.get('url', '')
+    print(url)
+    search = supabase.table("yelp_search").select("yelp_response").eq("url", url).limit(1).execute()
+    if search.data is None:
+        return "No search found", 404
+    return jsonify(search.data[0]['yelp_response'])

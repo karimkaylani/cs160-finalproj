@@ -11,57 +11,7 @@
 
 <section>
 
-    <div class="user-results">     
-        <div class="result-card">
-            <div class="result-card-image" style="background-image: url(../static/images/donuts.jpg);"><i class="fa fa-star"></i></div>
-            <div class="result-card-desc">
-                <h1>Jupiter</h1>
-                <h2>2181 Shattuck Ave</h2>
-                <h3>Pizza</h3>
-                <div class="stars-container">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <p class="stars-counter">(60)</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="result-card">
-            <div class="result-card-image" style="background-image: url(../static/images/donuts.jpg);"><i class="fa fa-star"></i></div>
-            <div class="result-card-desc">
-                <h1>Jupiter</h1>
-                <h2>2181 Shattuck Ave</h2>
-                <h3>Pizza</h3>
-                <div class="stars-container">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <p class="stars-counter">(60)</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="result-card">
-            <div class="result-card-image" style="background-image: url(../static/images/donuts.jpg);"><i class="fa fa-star"></i></div>
-            <div class="result-card-desc">
-                <h1>Jupiter</h1>
-                <h2>2181 Shattuck Ave</h2>
-                <h3>Pizza</h3>
-                <div class="stars-container">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <p class="stars-counter">(60)</p>
-                </div>
-            </div>
-        </div>
+    <div class="user-results" id="restaurantCards">     
     </div>
 
 
@@ -88,6 +38,10 @@
         </div>
     </div>
     
+    
+    <div class="user-results" id="restaurantCards" position=absolute></div>
+
+
     <div class="user-results" id="restaurantCards" position=absolute></div>
 
 <section>
@@ -134,19 +88,16 @@
             }
         }
 
-        async function callFoodApi() {
+        async function getYelpResults(url) {
             const foodApiResult = document.getElementById("food-result");
-            foodApiResult.value = ""; // Clear previous cards
-
-            //todo: get preference variables
-            let prefs = await getPreferences();
-            prefs = prefs.preferences;
-            terms = "dessert";
-            userLocation = "berkeley, ca";
-
-            // Call Yelp API
+            const response = await fetch(`/api/yelp_search?url=${encodeURIComponent(url)}`)
+            let output = await response.json();
+            if (output) {
+                console.log('Loaded from cache!')
+                foodApiResult.innerText = JSON.stringify(output, null, 4);
+                return
+            }
             const apiKey = 'a0Wnk-q_xlBU4KO0TF-JB-4qmMB6QoLsMhIecm5-0Jp9p3H-1y1hJwYfVO_Nc26P6OEKgncpT_TL5Csgvnf4CSeGagYCzQcKx9EDkMaUx21qte9RnFFwmQVEUAMeZnYx';
-            const url = `https://cors-anywhere.herokuapp.com/https://api.yelp.com/v3/businesses/search?term=${prefs.preferred_cuisine}&location=${userLocation}&price=${getPrefferedPrice(prefs.preferred_price)}&open_now=true&limit=10`;
             fetch(url, {
                 headers: {
                     'Authorization': `Bearer ${apiKey}`
@@ -155,6 +106,7 @@
             .then(response => response.json())
             .then(data => {
                 const candidate_restaurants_list = data.businesses.slice(0, 10);  //using 5 for lower cost while testing
+                setYelpResults(url, candidate_restaurants_list);
                 const candidate_restaurants_list_str = JSON.stringify(candidate_restaurants_list, null, 4);
                 foodApiResult.innerText = candidate_restaurants_list_str;
                 console.log(candidate_restaurants_list)
@@ -162,6 +114,35 @@
             .catch(error => {
                 console.error('Error:', error);
             });
+        }
+
+        async function setYelpResults(url, res) {
+            let data = {}
+            data.url = url
+            data.results = res
+            const response = await fetch("/api/yelp_search", {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            })
+            let output = await response.json();
+        }
+
+        async function callFoodApi() {
+            const foodApiResult = document.getElementById("food-result");
+            foodApiResult.value = ""; // Clear previous cards
+
+            //todo: use user location
+            let prefs = await getPreferences();
+            prefs = prefs.preferences;
+            userLocation = "berkeley, ca";
+
+            // Call Yelp API
+            const url = `https://cors-anywhere.herokuapp.com/https://api.yelp.com/v3/businesses/search?term=${prefs.preferred_cuisine}&location=${userLocation}&price=${getPrefferedPrice(prefs.preferred_price)}&open_now=true&limit=10`;
+
+            getYelpResults(url);
         }
 
         async function getPreferences() {
@@ -176,7 +157,6 @@
         
         async function callTextApi() {
             candidate_restaurants_list_str = document.getElementById("food-result").innerText;
-            //getPreferences();
 
             //todo: use ALL group preferences
             let prefs = await getPreferences();
@@ -249,8 +229,6 @@
                 }
             }).filter(restaurant => restaurant !== null); // Remove entries with missing fields
         }
-
-
 
         function displayRestaurantCards(restaurants) {
             const restaurantCardsDiv = document.getElementById("restaurantCards");
