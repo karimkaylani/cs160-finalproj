@@ -46,8 +46,6 @@
 
 
     <script>
-        // Your other functions
-
         const refreshButton = document.querySelector('.refresh-options button');
         refreshButton.addEventListener('click', generate);
 
@@ -58,6 +56,26 @@
 
         function getMeters(miles) {
             return Math.round(miles*1609.344);
+        }
+
+        async function getUser() {
+            const response = await fetch("/api/user", {
+                method: "GET",
+                headers: {
+                "Content-Type": "application/json",
+                },
+            })
+            return await response.json();
+        }
+
+        function createUserCard (name, img) {
+            const userCard = document.createElement('div');
+            userCard.className = 'user-card';
+            userCard.innerHTML = `
+                <div class="user-card-image" style="background-image: url(${img});"></div>
+                <div class="user-card-name"><p>${name}</p></div>
+            `;
+            return userCard;
         }
 
         function getPrefferedPrice(price) {
@@ -220,7 +238,7 @@
                 card.innerHTML = `
                     <div class="result-card-image" style="background-image: url(${restaurant.imgurl});"><i class="fa fa-star"></i></div>
                     <div class="result-card-desc">
-                        <h1>No.${index + 1} --- <a href="${restaurant.url}">${restaurant.name}</a> </h1>
+                        <h1><a target='_blank' href="${restaurant.url}">${restaurant.name}</a> </h1>
                         <h2>${restaurant.address}</h2>
                         <div class="stars-container">
                     <i class="fa fa-star"></i>

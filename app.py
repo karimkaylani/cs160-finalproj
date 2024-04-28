@@ -249,9 +249,7 @@ def save_search():
 @app.route("/api/yelp_search", methods=["GET"])
 def get_search():
     url = request.args.get('url', '')
-    print(url)
     search = supabase.table("yelp_search").select("yelp_response").eq("url", url).limit(1).execute()
-    print(search)
     if not search.data:
         return "No search found", 404
     return jsonify(search.data[0]['yelp_response'])
