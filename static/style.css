@@ -372,3 +372,27 @@ section .user-groups {
 .action-icons:not(:last-child) {
     margin-right: 10px;
 }
+
+.image-text-container {
+    text-align: center;
+    padding: 20px;
+  }
+  .image-container {
+    height: 200px; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; 
+  }
+  .image-container img {
+    height: 100%; 
+    width: auto; 
+    max-width: none; 
+    object-fit: cover; 
+  }
+  .image-text-container h3 {
+    margin-top: 20px;
+  }
+  .image-text-container p {
+    margin-top: 10px;
+  }
