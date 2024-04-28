@@ -11,16 +11,15 @@
 
 <section>
 
-    <div class="user-results" id="restaurantCards">     
+    <div class="user-results" id="restaurantCards">
+        <div class="loading" id="loading" style="display: none;">
+            <p>Loading...</p>
+        </div>
     </div>
 
 
     <div class="user-groups">
         <div class="selected-users">
-            <div class="user-card">
-                <div class="user-card-image" style="background-image: url('{{ user_photo }}')";></div>
-                <div class="user-card-name"><p>{{ user_name }}</p></div>
-            </div>
         </div>
         <div class="user-groups-options">
             <i class="fa fa-plus"></i>
@@ -33,22 +32,36 @@
             </button>
         </div>
     </div>
-    
-    
-    <div class="user-results" id="restaurantCards" position=absolute></div>
-
-
-    <div class="user-results" id="restaurantCards" position=absolute></div>
-
 
     <script>
         const refreshButton = document.querySelector('.refresh-options button');
         refreshButton.addEventListener('click', generate);
 
+        let currentMembers = []
+        let currentPreferences = {}
+        window.onload = async function() {
+            const user = await getCurrentUser();
+            createUserCard(user.name, user.avatar);
+            currentMembers.push(user.user_id);
+            currentPreferences = await getAllPreferences()
+        }
+
+        function startLoading() {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+        }
+
+        function stopLoading() {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'none';
+        }
 
         async function generate() {
-            const restaurantData = await callFoodApi();
-            await callTextApi(restaurantData);
+            startLoading();
+            let preferences = await getAllPreferences();
+            const restaurantData = JSON.stringify(await callFoodApi(preferences), null, 4);
+            await callTextApi(restaurantData, preferences);
+            stopLoading();
         }
 
         function getMeters(miles) {
@@ -76,7 +89,7 @@
             selectedUsers.appendChild(userCard);
         }
 
-        function getPrefferedPrice(price) {
+        function getPreferredPrice(price) {
             if (price === "$") {
                 return "1";
             } else if (price === "$$") {
@@ -88,60 +101,60 @@
             }
         }
 
-        async function getYelpResults(url) {
-            const response = await fetch(`/api/yelp_search?url=${encodeURIComponent(url)}`)
-            if (response.ok) {
-                let output = await response.json();
-                console.log('Loaded from cache!')
-                return JSON.stringify(output, null, 4);
-            }
-            const apiKey = 'a0Wnk-q_xlBU4KO0TF-JB-4qmMB6QoLsMhIecm5-0Jp9p3H-1y1hJwYfVO_Nc26P6OEKgncpT_TL5Csgvnf4CSeGagYCzQcKx9EDkMaUx21qte9RnFFwmQVEUAMeZnYx';
-            return fetch(url, {
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                const candidate_restaurants_list = data.businesses.slice(0, 10);  //using 5 for lower cost while testing
-                setYelpResults(url, candidate_restaurants_list);
-                const candidate_restaurants_list_str = JSON.stringify(candidate_restaurants_list, null, 4);
-                return candidate_restaurants_list_str;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                return "";
-            });
-        }
-
-        async function setYelpResults(url, res) {
-            let data = {}
-            data.url = url
-            data.results = res
-            const response = await fetch("/api/yelp_search", {
-                method: "POST",
-                headers: {
-                "Content-Type": "application/json",
-                },
-                body: JSON.stringify(data),
-            })
-            let output = await response.json();
-        }
-
-        async function callFoodApi() {
+        async function callFoodApi(prefs) {
             //todo: use user location
-            let prefs = await getPreferences();
-            prefs = prefs.preferences;
             userLocation = "berkeley, ca";
-
             // Call Yelp API
-            const url = `https://cors-anywhere.herokuapp.com/https://api.yelp.com/v3/businesses/search?term=${prefs.preferred_cuisine}&location=${userLocation}&price=${getPrefferedPrice(prefs.preferred_price)}&open_now=true&limit=10`;
-
-            return await getYelpResults(url);
+            const url = `https://api.yelp.com/v3/businesses/search?term=${prefs.preferred_cuisine}&location=${userLocation}&price=${getPreferredPrice(prefs.preferred_price)}&open_now=true&limit=10`;
+            
+            const response = await fetch(`/api/yelp_search?url=${encodeURIComponent(url)}`)
+            return await response.json();
         }
 
-        async function getPreferences() {
-            const response = await fetch("/api/preferences", {
+        async function getAllPreferences() {
+            let preferences = {}
+            for (user of currentMembers) {
+                const response = await fetch(`/api/preferences/${user}`, {
+                    method: "GET",
+                    headers: {
+                    "Content-Type": "application/json",
+                    },
+                })
+                let output = await response.json();
+                output = output.preferences;
+                // min distance
+                if (!preferences.max_distance || output.max_distance < preferences.max_distance) {
+                    preferences.max_distance = output.max_distance;
+                }
+                // price
+                let price = getPreferredPrice(output.preferred_price ?? "")
+                if (!preferences.preferred_price || price.length < preferences.preferred_price.length) {
+                    preferences.preferred_price = output.preferred_price;
+                }
+                // append cuisine
+                if (!preferences.preferred_cuisine) {
+                    preferences.preferred_cuisine = output.preferred_cuisine;
+                } else {
+                    preferences.preferred_cuisine = preferences.preferred_cuisine.concat(output.preferred_cuisine);
+                }
+                // append dietary restrictions
+                if (!preferences.dietary_restrictions) {
+                    preferences.dietary_restrictions = output.dietary_restrictions;
+                } else {
+                    preferences.dietary_restrictions = preferences.dietary_restrictions.concat(output.dietary_restrictions);
+                }
+                // append other
+                if (!preferences.other) {
+                    preferences.other = "User: " + output.other;
+                } else {
+                    preferences.other = preferences.other + "\nUser: " + output.other;
+                }
+            }
+            return preferences;
+        }
+
+        async function getPreferences(id) {
+            const response = await fetch(`/api/preferences/${id}`, {
                 method: "GET",
                 headers: {
                 "Content-Type": "application/json",
@@ -150,12 +163,9 @@
             return await response.json();
         }
         
-        async function callTextApi(restaurantData) {
+        async function callTextApi(restaurantData, prefs) {
             candidate_restaurants_list_str = restaurantData
 
-            //todo: use ALL group preferences
-            let prefs = await getPreferences();
-            prefs = prefs.preferences;
             price_preference = prefs.preferred_price
             cuisine_preference = prefs.preferred_cuisine
             dietary_preference = prefs.dietary_restrictions
@@ -236,7 +246,7 @@
                 card.innerHTML = `
                     <div class="result-card-image" style="background-image: url(${restaurant.imgurl});"><i class="fa fa-star"></i></div>
                     <div class="result-card-desc">
-                        <h1><a target='_blank' href="${restaurant.url}">${restaurant.name}</a> </h1>
+                        <h1><a target='_blank' style='color: inherit;' href="${restaurant.url}">${restaurant.name}</a> </h1>
                         <h2>${restaurant.address}</h2>
                         <div class="stars-container">
                     <i class="fa fa-star"></i>
