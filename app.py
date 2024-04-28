@@ -17,8 +17,9 @@ def home():
     if not data:
         return redirect("/login")
     id = data.user.id
-    user = data.user.user_metadata['full_name']
-    return render_template("index.html", user=user)
+    user_name = data.user.user_metadata['full_name']
+    user_photo = data.user.user_metadata['avatar_url']
+    return render_template("index.html", user_name=user_name, user_photo=user_photo)
 
 @app.route("/login")
 def login():

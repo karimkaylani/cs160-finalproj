@@ -6,7 +6,7 @@
         <img src="{{ url_for('static', filename='images/palate_pic.png') }}" alt="Palate Logo" />
         <h1>&nbsp;palate</h1>
     </div>
-    <a href="/preferences"><div class="user-options-container"><p>Hi, {{ user }}!</p>&nbsp;<i class="fa fa-gear"></i></div></a>
+    <a style='color: inherit; text-decoration: none' href="/preferences"><div class="user-options-container"><i class="fa fa-gear"></i></div></a>
 </nav>
 
 <section>
@@ -18,12 +18,8 @@
     <div class="user-groups">
         <div class="selected-users">
             <div class="user-card">
-                <div class="user-card-image" style="background-image: url(../static/images/sarah.jpeg);"></div>
-                <div class="user-card-name"><p>Sarah Jones</p></div>
-            </div>
-            <div class="user-card">
-                <div class="user-card-image" style="background-image: url(../static/images/sarah.jpeg);"></div>
-                <div class="user-card-name"><p>Sarah Jones</p></div>
+                <div class="user-card-image" style="background-image: url('{{ user_photo }}')";></div>
+                <div class="user-card-name"><p>{{ user_name }}</p></div>
             </div>
         </div>
         <div class="user-groups-options">
@@ -49,6 +45,7 @@
         const refreshButton = document.querySelector('.refresh-options button');
         refreshButton.addEventListener('click', generate);
 
+
         async function generate() {
             const restaurantData = await callFoodApi();
             await callTextApi(restaurantData);
@@ -58,7 +55,7 @@
             return Math.round(miles*1609.344);
         }
 
-        async function getUser() {
+        async function getCurrentUser() {
             const response = await fetch("/api/user", {
                 method: "GET",
                 headers: {
@@ -69,13 +66,14 @@
         }
 
         function createUserCard (name, img) {
+            const selectedUsers = document.querySelector('.selected-users');
             const userCard = document.createElement('div');
             userCard.className = 'user-card';
             userCard.innerHTML = `
                 <div class="user-card-image" style="background-image: url(${img});"></div>
                 <div class="user-card-name"><p>${name}</p></div>
             `;
-            return userCard;
+            selectedUsers.appendChild(userCard);
         }
 
         function getPrefferedPrice(price) {
