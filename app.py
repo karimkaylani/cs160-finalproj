@@ -251,10 +251,14 @@ def get_user(id):
 
 @app.route("/api/user/search/<name>", methods=["GET"])
 def search_user(name):
-    users = supabase.table("users").select("*").ilike("name", f"%{name}%").limit(5).execute()
-    if users.data is None:
+    # get all users
+    users = supabase.table("users").select("*").execute()
+    users = users.data
+    # find users with name like name, case-sensitive
+    users = [user for user in users if name.lower() in user['name'].lower()]
+    if not users:
         return "No users found", 404
-    return jsonify(users.data)
+    return jsonify(users)
 
 def save_search(url, results):
     supabase.table("yelp_search").upsert(
@@ -272,7 +276,7 @@ def get_search():
     if response.status_code != 200:
         return "Error fetching data", 400
     response = response.json()
-    response = response['businesses'][:10]
+    response = response['businesses']
     save_search(url, response)
     return response
 

@@ -37,6 +37,9 @@
         const refreshButton = document.querySelector('.refresh-options button');
         refreshButton.addEventListener('click', generate);
 
+        const addButton = document.querySelector('.user-groups-options .fa-plus');
+        addButton.addEventListener('click', promptAddUser);
+
         let currentMembers = []
         let currentPreferences = {}
         window.onload = async function() {
@@ -44,6 +47,7 @@
             createUserCard(user.name, user.avatar);
             currentMembers.push(user.user_id);
             currentPreferences = await getAllPreferences()
+            console.log(currentPreferences);
         }
 
         function startLoading() {
@@ -60,6 +64,7 @@
             startLoading();
             let preferences = await getAllPreferences();
             const restaurantData = JSON.stringify(await callFoodApi(preferences), null, 4);
+            console.log(restaurantData);
             await callTextApi(restaurantData, preferences);
             stopLoading();
         }
@@ -68,8 +73,34 @@
             return Math.round(miles*1609.344);
         }
 
+        async function promptAddUser() {
+            const name = prompt("Enter the name of the user you would like to add:");
+            const user = await searchUsers(name);
+            if (user.length === 0) {
+                alert("User not found.");
+            } else {
+                addUser(user);
+            }
+        }
+
+        async function addUser(user) {
+            currentMembers.push(user[0].user_id);
+            createUserCard(user[0].name, user[0].avatar);
+            console.log(await getAllPreferences());
+        }
+
         async function getCurrentUser() {
             const response = await fetch("/api/user", {
+                method: "GET",
+                headers: {
+                "Content-Type": "application/json",
+                },
+            })
+            return await response.json();
+        }
+
+        async function searchUsers(name) {
+            const response = await fetch(`/api/user/search/${name}`, {
                 method: "GET",
                 headers: {
                 "Content-Type": "application/json",
@@ -105,7 +136,7 @@
             //todo: use user location
             userLocation = "berkeley, ca";
             // Call Yelp API
-            const url = `https://api.yelp.com/v3/businesses/search?term=${prefs.preferred_cuisine}&location=${userLocation}&price=${getPreferredPrice(prefs.preferred_price)}&open_now=true&limit=10`;
+            const url = `https://api.yelp.com/v3/businesses/search?term='restauraunt'&categories=${prefs.preferred_cuisine}&location=${userLocation}&price=${getPreferredPrice(prefs.preferred_price)}&open_now=true&limit=30`;
             
             const response = await fetch(`/api/yelp_search?url=${encodeURIComponent(url)}`)
             return await response.json();
@@ -137,6 +168,8 @@
                 } else {
                     preferences.preferred_cuisine = preferences.preferred_cuisine.concat(output.preferred_cuisine);
                 }
+                preferences.preferred_cuisine = [...new Set(preferences.preferred_cuisine)];
+                // preferences.preferred_cuisine = preferences.preferred_cuisine.slice(0, 3);
                 // append dietary restrictions
                 if (!preferences.dietary_restrictions) {
                     preferences.dietary_restrictions = output.dietary_restrictions;
@@ -149,6 +182,8 @@
                 } else {
                     preferences.other = preferences.other + "\nUser: " + output.other;
                 }
+                
+
             }
             return preferences;
         }
