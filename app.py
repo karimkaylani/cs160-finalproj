@@ -1,7 +1,9 @@
 from flask import Flask, jsonify, redirect, render_template, request, g, session
 import os
+import requests
 from supabase_client import supabase
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
 
@@ -16,10 +18,7 @@ def home():
         return redirect("/login")
     if not data:
         return redirect("/login")
-    id = data.user.id
-    user_name = data.user.user_metadata['full_name']
-    user_photo = data.user.user_metadata['avatar_url']
-    return render_template("index.html", user_name=user_name, user_photo=user_photo)
+    return render_template("index.html")
 
 @app.route("/login")
 def login():
@@ -80,6 +79,8 @@ API Endpoints
 /api/preferences:
     POST: set/update user preferences (preferred_price, max_distance, preferred_cuisine, dietary_restrictions)
     GET: get user preferences
+/api/preferences/<user_id>:
+    GET: get user preferences by id (user_id)
 
 /api/groups:
     POST: create a new group for user (name, members)
@@ -92,6 +93,8 @@ API Endpoints
     GET: get all user favorites
     DELETE: remove a restaurant from user favorites (restaurant_id)
 
+/api/user:
+    GET: get current user
 /api/user/<id>:
     GET: get user by id (user_id)
 /api/user/search/<name>:
@@ -125,6 +128,14 @@ def get_preferences():
         return "User not authenticated", 401
     id = data.user.id
     prefs = supabase.table("preferences").select("preferences").eq("user_id", id).limit(1).execute()
+    prefs = prefs.data[0]
+    if prefs is None:
+        return "No preferences set", 404
+    return jsonify(prefs)
+
+@app.route("/api/preferences/<user_id>", methods=["GET"])
+def get_user_preferences(user_id):
+    prefs = supabase.table("preferences").select("preferences").eq("user_id", user_id).limit(1).execute()
     prefs = prefs.data[0]
     if prefs is None:
         return "No preferences set", 404
@@ -222,6 +233,15 @@ def remove_favorite():
     ).execute()
     return jsonify(favorite)
 
+@app.route("/api/user", methods=["GET"])
+def get_current_user():
+    user = supabase.auth.get_user()
+    if user is None:
+        return "User not found", 404
+    id = user.user.id
+    user = supabase.table("users").select("*").eq("user_id", id).limit(1).execute()
+    return jsonify(user.data[0])
+
 @app.route("/api/user/<id>", methods=["GET"])
 def get_user(id):
     user = supabase.table("users").select("*").eq("user_id", id).limit(1).execute()
@@ -231,26 +251,33 @@ def get_user(id):
 
 @app.route("/api/user/search/<name>", methods=["GET"])
 def search_user(name):
-    users = supabase.table("users").select("*").ilike("name", f"%{name}%").limit(5).execute()
-    if users.data is None:
+    # get all users
+    users = supabase.table("users").select("*").execute()
+    users = users.data
+    # find users with name like name, case-sensitive
+    users = [user for user in users if name.lower() in user['name'].lower()]
+    if not users:
         return "No users found", 404
-    return jsonify(users.data)
+    return jsonify(users)
 
-@app.route("/api/yelp_search", methods=["POST"])
-def save_search():
-    data = request.json
-    required_args = ['url', 'results']
-    if data is None or not all(arg in data for arg in required_args):
-        return f"Please supply all required arguments\n{required_args}", 404
-    search = supabase.table("yelp_search").upsert(
-        {"url": data['url'], "yelp_response": data['results']}
+def save_search(url, results):
+    supabase.table("yelp_search").upsert(
+        {"url": url, "yelp_response": results}
     ).execute()
-    return jsonify("Success")
 
 @app.route("/api/yelp_search", methods=["GET"])
 def get_search():
     url = request.args.get('url', '')
     search = supabase.table("yelp_search").select("yelp_response").eq("url", url).limit(1).execute()
-    if not search.data:
-        return "No search found", 404
-    return jsonify(search.data[0]['yelp_response'])
+    if search.data:
+        print('Loaded from cache!')
+        return jsonify(search.data[0]['yelp_response'])
+    response = requests.get(url, headers={"Authorization": os.getenv('YELP_API_KEY'),"accept": "application/json"})
+    if response.status_code != 200:
+        return "Error fetching data", 400
+    response = response.json()
+    response = response['businesses']
+    save_search(url, response)
+    return response
+
+    
