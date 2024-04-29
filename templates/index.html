@@ -51,7 +51,17 @@
         }
 
         function startLoading() {
-            const loading = document.getElementById('loading');
+            // clear out previous results
+            const restaurantCardsDiv = document.getElementById("restaurantCards");
+            restaurantCardsDiv.innerHTML = ""; // Clear previous cards
+
+            // create loading div
+            const loading = document.createElement('div');
+            loading.className = 'loading';
+            loading.id = 'loading';
+            loading.innerHTML = `<p>Loading...</p>`;
+            restaurantCardsDiv.appendChild(loading);
+
             loading.style.display = 'block';
         }
 
@@ -136,7 +146,7 @@
             //todo: use user location
             userLocation = "berkeley, ca";
             // Call Yelp API
-            const url = `https://api.yelp.com/v3/businesses/search?term='restauraunt'&categories=${prefs.preferred_cuisine}&location=${userLocation}&price=${getPreferredPrice(prefs.preferred_price)}&open_now=true&limit=30`;
+            const url = `https://api.yelp.com/v3/businesses/search?term='restauraunt'&categories=${prefs.preferred_cuisine}&location=${userLocation}&radius=${getMeters(prefs.max_distance)}&price=${getPreferredPrice(prefs.preferred_price)}&limit=30`;
             
             const response = await fetch(`/api/yelp_search?url=${encodeURIComponent(url)}`)
             return await response.json();
@@ -154,7 +164,7 @@
                 let output = await response.json();
                 output = output.preferences;
                 // min distance
-                if (!preferences.max_distance || output.max_distance < preferences.max_distance) {
+                if (!preferences.max_distance || parseInt(output.max_distance) < parseInt(preferences.max_distance)) {
                     preferences.max_distance = output.max_distance;
                 }
                 // price
@@ -162,9 +172,10 @@
                 if (!preferences.preferred_price || price.length < preferences.preferred_price.length) {
                     preferences.preferred_price = output.preferred_price;
                 }
-                // append cuisine
+                
+                output.preferred_cuisine = output.preferred_cuisine.map(cuisine => cuisine.toLowerCase());
                 if (!preferences.preferred_cuisine) {
-                    preferences.preferred_cuisine = output.preferred_cuisine;
+                    preferences.preferred_cuisine = output.preferred_cuisine
                 } else {
                     preferences.preferred_cuisine = preferences.preferred_cuisine.concat(output.preferred_cuisine);
                 }
@@ -204,7 +215,7 @@
             price_preference = prefs.preferred_price
             cuisine_preference = prefs.preferred_cuisine
             dietary_preference = prefs.dietary_restrictions
-            radius = prefs.max_distance
+            radius = getMeters(prefs.max_distance)
             other_preference = prefs.other
 
             // Use the same candidate_restaurants_list variable here
@@ -253,7 +264,7 @@
                 const reasonMatch = restaurant.match(/Reason: (.*)/);
                 
                 // Check if all required fields are present
-                if (idMatch && nameMatch && addressMatch && urlMatch && reasonMatch) {
+                if (idMatch || nameMatch || addressMatch || urlMatch || imgurlMatch || ratingMatch || rcountMatch || reasonMatch) {
                     const id = idMatch ? idMatch[1] : "";
                     const name = nameMatch ? nameMatch[1] : "";
                     const address = addressMatch ? addressMatch[1] : "";
@@ -264,7 +275,6 @@
                     const reason = reasonMatch ? reasonMatch[1] : "";
                     return { id: id, name: name, address: address, url: url, imgurl: imgurl, rating: rating, rcount: rcount, reason: `Reason: ${reason}` };
                 } else {
-                    // If any required field is missing, return null
                     return null;
                 }
             }).filter(restaurant => restaurant !== null); // Remove entries with missing fields
@@ -272,7 +282,6 @@
 
         function displayRestaurantCards(restaurants) {
             const restaurantCardsDiv = document.getElementById("restaurantCards");
-            restaurantCardsDiv.innerHTML = ""; // Clear previous cards
 
             restaurants.forEach((restaurant, index) => {
                 const card = document.createElement("div");
