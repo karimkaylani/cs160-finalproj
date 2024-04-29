@@ -252,7 +252,7 @@
         }
 
         function parseTop3Restaurants(response) {
-            const restaurants = response.split('\n');
+            const restaurants = response.split('No.');
             return restaurants.map(restaurant => {
                 const idMatch = restaurant.match(/ID: "([^"]*)"/);
                 const nameMatch = restaurant.match(/Name: "([^"]*)"/);
