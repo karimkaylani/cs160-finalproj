@@ -321,7 +321,6 @@
 
         async function callFoodApi(prefs) {
             console.log(latitude, longitude)
-            console.log(prefs.preferred_cuisine)
             const url = `https://api.yelp.com/v3/businesses/search?term=restaurant&latitude=${latitude}&longitude=${longitude}&radius=${getMeters(prefs.max_distance)}&price=${getPreferredPrice(prefs.preferred_price)}&limit=30`;
             
             const response = await fetch(`/api/yelp_search?url=${encodeURIComponent(url)}`)
