@@ -25,30 +25,47 @@ function loadFavorites() {
           const favoritesList = document.getElementById('favoritesList');
           favoritesList.innerHTML = ''; 
           favorites.forEach(favorite => {
-              const cardHtml = createFavoriteCard(favorite);
-              favoritesList.innerHTML += cardHtml;
+              const card = createFavoriteCard(favorite);
+              favoritesList.appendChild(card);
           });
-          attachRemoveFavoriteListeners();
       });
 }
 
 function createFavoriteCard(restaurant) {
-    return `
-        <div class="result-card">
-            <div class="result-card-image" style="background-image: url(${restaurant.imagePath});">
-                <i class="fa fa-star remove-option" data-restaurant-id="${restaurant.id}"></i>
-            </div>
-            <div class="result-card-desc">
-                <h1>${restaurant.name}</h1>
-                <h2>${restaurant.address}</h2>
-                <h3>${restaurant.cuisineType}</h3>
-                <div class="stars-container">
-                    ${generateStars(restaurant.stars)}
-                    <p class="stars-counter">(${restaurant.reviewCount})</p>
-                </div>
-            </div>
+    const card = document.createElement("div");
+    card.className = "result-card";
+    card.style.height = "500px"
+    card.innerHTML = `
+        <div class="result-card-image" style="background-image: url(${restaurant.img_url});"><i id="fav-star" class="fa fa-star remove-option"></i></div>
+        <div class="result-card-desc">
+            <h1><a target='_blank' style='color: inherit;' href="${restaurant.url}">${restaurant.name}</a> </h1>
+            <h2>${restaurant.address}</h2>
+            <div class="stars-container">
+        <i class="fa fa-star rating-star" style="display: none;"></i>
+        <i class="fa fa-star rating-star" style="display: none;"></i>
+        <i class="fa fa-star rating-star" style="display: none;"></i>
+        <i class="fa fa-star rating-star" style="display: none;"></i>
+        <i class="fa fa-star rating-star" style="display: none;"></i>
+        <p class="stars-counter">${restaurant.rating} (${restaurant.num_reviews})</p>
+    </div>
+            <h3>${restaurant.reason}</h3>
         </div>
-        `;
+    `;
+    // add appropriate amount of stars
+    const stars = card.querySelectorAll('.rating-star');
+    const rating = parseFloat(restaurant.rating);
+    const fullStars = Math.round(rating);
+
+    for (let i = 0; i < fullStars; i++) {
+        stars[i].style.display = 'block';
+    }
+
+    const favStar = card.querySelector('#fav-star');
+    favStar.addEventListener('click', function() {
+        removeFavorite(restaurant.id, card);
+    });
+
+    return card
 }
 
 function generateStars(stars) {
@@ -63,29 +80,19 @@ function generateStars(stars) {
     return starsHtml;
 }
 
-function attachRemoveFavoriteListeners() {
-    document.querySelectorAll('.result-card-image .remove-option').forEach(star => {
-        star.addEventListener('click', function() {
-            const restaurantId = this.getAttribute('data-restaurant-id');
-            removeFavorite(restaurantId, this.closest('.col-md-4'));
-        });
-    });
-}
-
 function removeFavorite(restaurantId, cardElement) {
-    fetch(`/api/favorites/${restaurantId}`, {
+    fetch(`/api/favorites`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify({'restaurant_id': restaurantId}),
     }).then(response => {
         if (response.ok) {
             cardElement.remove(); 
         }
     });
 }
-
-
 
 </script>
 {% endblock %}

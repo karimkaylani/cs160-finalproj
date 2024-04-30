@@ -106,6 +106,10 @@ API Endpoints
 /api/yelp_search/<url>:
     GET: get yelp search by url
 
+/api/restaurants/<id>:
+    GET: get restaurant by id (restaurant_id)
+    POST: save restaurant to database (restaurant_id, name, image_url, url, location, phone, rating, price, categories)
+
 '''
 @app.route("/api/preferences", methods=["POST"])
 def set_preferences():
@@ -219,7 +223,12 @@ def get_favorites():
     favorites = supabase.table("favorites").select("favorites").eq("user_id", id).limit(1).execute()
     if favorites.data is None:
         return jsonify([])
-    return jsonify(favorites.data[0]['favorites'])
+    id_list = json.loads(favorites.data[0]['favorites'])
+    res = []
+    for id in id_list:
+        restaurant = supabase.table("restaurants").select("*").eq("id", id).limit(1).execute()
+        res.append(restaurant.data[0])
+    return jsonify(res)
 
 @app.route("/api/favorites", methods=["DELETE"])
 def remove_favorite():
@@ -290,4 +299,20 @@ def get_search():
     save_search(url, response)
     return response
 
-    
+@app.route("/api/restaurants/<id>", methods=["GET"])
+def get_restaurant(id):
+    restaurant = supabase.table("restaurants").select("*").eq("restaurant_id", id).limit(1).execute()
+    if restaurant.data is None:
+        return "Restaurant not found", 404
+    return jsonify(restaurant.data[0])
+
+@app.route("/api/restaurants", methods=["POST"])
+def save_restaurant():
+    data = request.json
+    required_args = ['id', 'name', 'address', 'url', 'imgurl', 'rating', 'rcount', 'reason']
+    if data is None or not all(arg in data for arg in required_args):
+        return f"Please supply all required arguments\n{required_args}", 404
+    restaurant = supabase.table("restaurants").upsert(
+        {"id": data['id'], "name": data['name'], "address": data['address'], "url": data['url'], "img_url": data['imgurl'], "rating": data['rating'], "num_reviews": data['rcount'], "reason": data['reason']}
+    ).execute()
+    return jsonify(restaurant.data)

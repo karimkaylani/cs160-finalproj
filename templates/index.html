@@ -37,8 +37,8 @@
     </div>
 
     <script>
-        const refreshButton = document.querySelector('.refresh-options button');
-        refreshButton.addEventListener('click', generate);
+        const generateButton = document.querySelector('.refresh-options button');
+        generateButton.addEventListener('click', generate);
 
         const addButton = document.querySelector('.user-groups-options .fa-plus');
         addButton.addEventListener('click', promptAddUser);
@@ -68,6 +68,7 @@
                 findMeIcon.addEventListener("click", () => {
                     window.open(`https://www.openstreetmap.org/#map=18/${latitude}/${longitude}`, "_blank"); // Open the map link in a new tab/window when the map-marker icon is clicked
                 });
+                generateButton.disabled = false;
             } catch (error) {
                 console.error("Error:", error.message);
             }
@@ -363,6 +364,7 @@
                     const rcount = rcountMatch ? rcountMatch[1] : "";
                     const reason = reasonMatch ? reasonMatch[1] : "";
                     const rest = { id: id, name: name, address: address, url: url, imgurl: imgurl, rating: rating, rcount: rcount, reason: `Reason: ${reason}` };
+                    addRestarantToDB(rest);
                     currentRestaurants.push(rest);
                     return rest;
                 } else {
@@ -371,9 +373,15 @@
             }).filter(restaurant => restaurant !== null); // Remove entries with missing fields
         }
 
-        // function addRestarantToDB(restaurant) {
-        //     // post request for /api/favorites
-        // }
+        function addRestarantToDB(restaurant) {
+            fetch(`/api/restaurants`, {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json",
+                },
+                body: JSON.stringify(restaurant),
+            })
+        }
 
         async function removeFavorite(rest_id) {
             const response = await fetch(`/api/favorites`, {
@@ -404,8 +412,14 @@
                 "Content-Type": "application/json",
                 },
             })
-            const faved_rests = (await response.json());
-            return faved_rests.includes(rest_id);
+            const faved_rests = await response.json();
+            let found = false;
+            faved_rests.forEach(rest => {
+                if (rest.id === rest_id) {
+                    found = true;
+                }
+            });
+            return found;
         }
 
         function displayRestaurantCards(restaurants) {
