@@ -63,12 +63,12 @@ function createGroupElement(group) {
     `;
     const edit = groupDiv.querySelector('.fa-edit');
     edit.addEventListener('click', () => {
-        editGroup(group.id)
+        renameGroup(group)
     });
     groupDiv.querySelector('.fa-user-edit').addEventListener('click', (event) => {
         event.stopPropagation();
 
-        renameGroup(group);
+        editGroup(group.id);
     });
     groupDiv.querySelector('.fa-trash-alt').addEventListener('click', (event) => {
         deleteGroup(group.id);

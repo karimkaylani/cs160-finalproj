@@ -23,6 +23,7 @@
         </div>
         <div class="user-groups-options">
             <i class="fa fa-plus"></i>
+            <i class="fa fa-group"></i>
             <i class="fa fa-save"></i>
             <i class="fa fa-map-marker" id="find-me"></i>
             <p id="status"></p>
@@ -36,6 +37,25 @@
         </div>
     </div>
 
+    <div class="modal fade" id="groupSelectModal" tabindex="-1" aria-labelledby="groupSelectModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="groupSelectModalLabel">Add Members from Group</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul id="groupList" class="list-group">
+                        
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const refreshButton = document.querySelector('.refresh-options button');
         refreshButton.addEventListener('click', generate);
@@ -45,6 +65,9 @@
 
         const saveGroupButton = document.querySelector('.user-groups-options .fa-save');
         saveGroupButton.addEventListener('click', promptGroupName);
+
+        const loadGroupButton = document.querySelector('.user-groups-options .fa-group');
+        loadGroupButton.addEventListener('click', loadAndShowGroups);
 
         let currentMembers = []
         let currentPreferences = {}
@@ -214,6 +237,67 @@
                 <div class="user-card-name"><p>${name}</p></div>
             `;
             selectedUsers.appendChild(userCard);
+        }
+
+        async function loadAndShowGroups() {
+            const response = await fetch('/api/groups', {
+                method: 'GET',
+                headers: {'Content-Type': 'application/json'}
+            });
+            const groups = await response.json();
+            const groupList = document.getElementById('groupList');
+            groupList.innerHTML = ''; 
+
+            groups.forEach(group => {
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                listItem.textContent = group.name;
+                const addButton = document.createElement('button');
+                addButton.className = 'btn btn-primary btn-sm';
+                addButton.textContent = 'Add';
+                addButton.onclick = () => addGroupMembersToPage(group.id);
+                listItem.appendChild(addButton);
+                groupList.appendChild(listItem);
+            });
+
+            const loadGroupsModal = new bootstrap.Modal(document.getElementById('groupSelectModal'), {
+                keyboard: false
+            });
+            loadGroupsModal.show();
+        }
+
+        async function addGroupMembersToPage(groupId) {
+            const response = await fetch(`/api/groups/${groupId}`, {
+                method: 'GET',
+                headers: {'Content-Type': 'application/json'}
+            });
+            const group = await response.json();
+            let members = JSON.parse(group.members)
+            console.log(members);
+            for (const memberId of members) {
+                if (!currentMembers.includes(memberId)) {
+                    try {
+                        const user = await getUserFromID(memberId);
+                        if (user) {
+                            console.log("User found:", user);
+                            createUserCard(user.name, user.avatar);
+                            currentMembers.push(memberId);  
+                        } else {
+                            console.log("No user data returned for ID:", memberId);
+                        }
+                    } catch (error) {
+                        console.error("Error fetching user data for ID:", memberId, error);
+                    }
+                }
+            }
+        }
+
+        async function getUserFromID(userId) {
+            const response = await fetch(`/api/user/${userId}`, {
+                method: 'GET',
+                headers: {'Content-Type': 'application/json'}
+            });
+            return await response.json();
         }
 
         function getPreferredPrice(price) {
