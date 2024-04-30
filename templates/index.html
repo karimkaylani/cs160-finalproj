@@ -24,6 +24,9 @@
         <div class="user-groups-options">
             <i class="fa fa-plus"></i>
             <i class="fa fa-save"></i>
+            <i class="fa fa-map-marker" id="find-me"></i>
+            <p id="status"></p>
+            <a id="map-link" target="_blank" class="weather-date"></a>
         </div>
         <div class="refresh-options">
             <button type="button" class="button">
@@ -43,11 +46,63 @@
         let currentMembers = []
         let currentPreferences = {}
         let currentRestaurants = []
+        let latitude = 0;
+        let longitude = 0;
+        
         window.onload = async function() {
             const user = await getCurrentUser();
             createUserCard(user.name, user.avatar);
             currentMembers.push(user.user_id);
             currentPreferences = await getAllPreferences()
+            try {
+                const [latitude, longitude] = await geoFindMe();
+                console.log("Latitude:", latitude);
+                console.log("Longitude:", longitude);
+
+                const findMeIcon = document.querySelector("#find-me");
+                findMeIcon.addEventListener("click", () => {
+                    window.open(`https://www.openstreetmap.org/#map=18/${latitude}/${longitude}`, "_blank"); // Open the map link in a new tab/window when the map-marker icon is clicked
+                });
+            } catch (error) {
+                console.error("Error:", error.message);
+            }
+        }
+
+        function geoFindMe() {
+            return new Promise((resolve, reject) => {
+                const status = document.querySelector("#status");
+                const mapLink = document.querySelector("#map-link");
+
+                // mapLink.href = "";
+                // mapLink.textContent = "";
+
+                function success(position) {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+
+                    status.textContent = "";
+                    // mapLink.href = `https://www.openstreetmap.org/#map=18/${latitude}/${longitude}`;
+                    // mapLink.textContent = `Latitude: ${latitude} °, Longitude: ${longitude} °`;
+
+                    // Resolve the promise with latitude and longitude
+                    resolve([latitude, longitude]);
+                }
+
+                function error() {
+                    status.textContent = "Unable to retrieve your location, use default location";
+                    // You may handle default location here or reject the promise
+                    reject(new Error("Unable to retrieve location"));
+                }
+
+                if (!navigator.geolocation) {
+                    status.textContent = "Geolocation is not supported by your browser";
+                    // Reject the promise if geolocation is not supported
+                    reject(new Error("Geolocation is not supported"));
+                } else {
+                    status.textContent = "Locating…";
+                    navigator.geolocation.getCurrentPosition(success, error);
+                }
+            });
         }
 
         function startLoading() {
@@ -72,8 +127,8 @@
 
         async function generate() {
             startLoading();
-            let preferences = await getAllPreferences();
-            const restaurantData = JSON.stringify(await callFoodApi(preferences), null, 4);
+            const preferences = await getAllPreferences();
+            const restaurantData = JSON.stringify(await callFoodApi(preferences, latitude, longitude), null, 4);
             console.log(restaurantData);
             await callTextApi(restaurantData, preferences);
             stopLoading();
