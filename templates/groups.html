@@ -1,6 +1,5 @@
-{% extends 'base.html' %}
+{% extends 'base.html' %} {% block content %}
 
-{% block content %}
 <div class="container mt-5">
     <h2 class="mb-4">Groups</h2>
     <div id="groupsList" class="list-group">
@@ -57,37 +56,70 @@ function createGroupElement(group) {
     groupDiv.innerHTML = `
         <span class="group-name">${group.name}</span>
         <span>
-            <i class="action-icons fas fa-edit" onclick="editGroup(${group.id})"></i>
-            <i class="action-icons fas fa-user-edit" onclick="renameGroup(${group.id})"></i>
-            <i class="action-icons fas fa-trash-alt" onclick="deleteGroup(${group.id})"></i>
+            <i class="action-icons fas fa-edit"></i>
+            <i class="action-icons fas fa-user-edit"></i>
+            <i class="action-icons fas fa-trash-alt"></i>
         </span>
     `;
+    const edit = groupDiv.querySelector('.fa-edit');
+    edit.addEventListener('click', () => {
+        editGroup(group.id)
+    });
+    groupDiv.querySelector('.fa-user-edit').addEventListener('click', (event) => {
+        event.stopPropagation();
+
+        renameGroup(group);
+    });
+    groupDiv.querySelector('.fa-trash-alt').addEventListener('click', (event) => {
+        deleteGroup(group.id);
+    });
     return groupDiv;
 }
 
-
-function editGroup(groupId) {
-    fetch(`/api/groups/${groupId}`, {
+async function getUserFromID(userID) {
+    const response = await fetch(`/api/user/${userID}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
         }
-    }).then(response => response.json())
-      .then(group => {
-          const groupMembersList = document.getElementById('groupMembersList');
-          groupMembersList.innerHTML = ''; 
-          group.members.forEach(member => {
-              const memberItem = document.createElement('li');
-              memberItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-              memberItem.setAttribute('data-member-name', member.name);
-              memberItem.innerHTML = `
-                  <img src="${member.profilePic}" alt="${member.name}" class="rounded-circle" width="50" height="50">
-                  <span>${member.name}</span>
-                  <button class="btn btn-danger btn-sm" onclick="removeMember('${groupId}', '${member.name}')">Remove</button>
-              `;
-              groupMembersList.appendChild(memberItem);
-          });
-      });
+    });
+    return response.json();
+}
+
+async function getGroupFromId(groupId) {
+    const response = await fetch(`/api/groups/${groupId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    });
+    return response.json();
+}
+
+async function editGroup(groupId) {
+    const group = await getGroupFromId(groupId)
+    const groupMembersList = document.getElementById('groupMembersList');
+    groupMembersList.innerHTML = ''; 
+    let members = JSON.parse(group.members);
+    members.forEach(async (memberID) => {
+        member = await getUserFromID(memberID);
+        console.log(member)
+        const memberItem = document.createElement('li');
+        memberItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+        memberItem.setAttribute('data-member-name', member.name);
+        memberItem.innerHTML = `
+            <img src="${member.avatar}" alt="${member.name}" class="rounded-circle" width="50" height="50">
+            <span>${member.name}</span>
+            <button id="remove-user-${memberID}" class="btn btn-danger btn-sm">Remove</button>
+        `;
+        const removeButton = memberItem.querySelector(`#remove-user-${memberID}`);
+        removeButton.onclick = (function(member) {
+            return function() {
+                removeMember(groupId, member);
+            }
+        })(member);
+        groupMembersList.appendChild(memberItem);
+    });
 
     const editGroupModal = new bootstrap.Modal(document.getElementById('editGroupModal'), {
         keyboard: false
@@ -95,21 +127,20 @@ function editGroup(groupId) {
     editGroupModal.show();
 }
 
-function removeMember(groupId, memberName) {
-    const groupMembersList = document.getElementById('groupMembersList');
-    const updatedMembers = Array.from(groupMembersList.children)
-                                .filter(item => item.getAttribute('data-member-name') !== memberName)
-                                .map(item => item.getAttribute('data-member-name'));
+async function removeMember(groupId, member) {
+    const group = await getGroupFromId(groupId);
+    const groupMembersList = JSON.parse(group.members);
+    const updatedMembers = groupMembersList.filter(memberID => memberID !== member.user_id);
 
     fetch(`/api/groups`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ group_id: groupId, members: updatedMembers })
+        body: JSON.stringify({ group_id: group.id, name: group.name, members: updatedMembers })
     }).then(response => {
         if (response.ok) {
-            document.querySelector(`[data-member-name="${memberName}"]`).remove();
+            document.querySelector(`[data-member-name="${member.name}"]`).remove();
         } else {
             alert('Could not remove the member. Please try again.');
         }
@@ -118,8 +149,8 @@ function removeMember(groupId, memberName) {
     });
 }
 
-function renameGroup(groupId) {
-    console.log('Renaming group', groupId);
+function renameGroup(group) {
+    console.log('Renaming group', group.id);
     const newName = prompt('Enter new group name:');
     if (newName) {
         fetch('/api/groups', { 
@@ -127,7 +158,7 @@ function renameGroup(groupId) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ group_id: groupId, name: newName })
+            body: JSON.stringify({ group_id: group.id, name: newName, members: JSON.parse(group.members)})
         }).then(response => {
             if (response.ok) {
                 loadGroups(); 

@@ -85,8 +85,9 @@ API Endpoints
 /api/groups:
     POST: create a new group for user (name, members)
     GET: get all groups for user
-    POST: update a group (group_id, name, members)
     DELETE: delete a group (group_id)
+/api/groups/<group_id>:
+    GET: get group by id (group_id)
 
 /api/favorites:
     POST: add a restaurant to user favorites (restaurant_id)
@@ -157,25 +158,34 @@ def create_group():
         return "User not authenticated", 401
     id = data.user.id
     args = request.json
+    print(args['members'])
     required_args = ['name', 'members']
     if args is None or not all(arg in args for arg in required_args):
         return f"Please supply all required arguments\n{required_args}", 404
-    group = supabase.table("groups").upsert(
-        {"id": args.group_id, "name": args['name'], "owner_id": id, "members": args["members"]}
-    ).execute()
-    return jsonify(group)
+    if ('group_id' not in args):
+        group = supabase.table("groups").upsert(
+            {"name": args['name'], "owner_id": id, "members": json.dumps(args["members"])}
+        ).execute()
+    else:
+        group = supabase.table("groups").upsert(
+            {"id": args['group_id'], "name": args['name'], "owner_id": id, "members": json.dumps(args["members"])}
+        ).execute()
+    return jsonify(group.data)
 
-@app.route("/api/groups", methods=["DELETE"])
-def delete_group():
+@app.route("/api/groups/<group_id>", methods=["DELETE"])
+def delete_group(group_id):
     data = supabase.auth.get_user()
     if not data:
         return "User not authenticated", 401
-    args = request.json
-    required_args = ['group_id']
-    if args is None or not all(arg in args for arg in required_args):
-        return f"Please supply all required arguments\n{required_args}", 404
-    group = supabase.table("groups").delete().eq("group_id", args['group_id']).execute()
-    return jsonify(group)
+    group = supabase.table("groups").delete().eq("id", group_id).execute()
+    return jsonify(group.data)
+
+@app.route("/api/groups/<group_id>", methods=["GET"])
+def get_group(group_id):
+    group = supabase.table("groups").select("*").eq("id", group_id).limit(1).execute()
+    if group.data is None:
+        return "Group not found", 404
+    return jsonify(group.data[0])
 
 @app.route("/api/favorites", methods=["POST"])
 def add_favorite():
