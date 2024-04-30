@@ -48,7 +48,6 @@
             createUserCard(user.name, user.avatar);
             currentMembers.push(user.user_id);
             currentPreferences = await getAllPreferences()
-            console.log(currentPreferences);
         }
 
         function startLoading() {
@@ -247,8 +246,14 @@
             );
             const textResponse = await response.text();
 
+//             const textResponse = 
+// `No.1: ID: "nXYmPSl2Gy_ge1QwhD6tgw", Name: "Osmanthus Dim Sum Lounge", Address: "504 Broadway, San Francisco, CA 94133", URL: "https://www.yelp.com/biz/osmanthus-dim-sum-lounge-san-francisco?adjust_creative=hoEj3TJi6gA5CoE0FY1TAw&utm_campaign=yelp_api_v3&utm_medium=api_v3_business_search&utm_source=hoEj3TJi6gA5CoE0FY1TAw", ImageURL: "https://s3-media2.fl.yelpcdn.com/bphoto/EzRcz8nnXnSGFLZEH4Hm1A/o.jpg", Rating: "4.4", ReviewCount: "803". Reason: Osmanthus Dim Sum Lounge offers a variety of delicious dim sum dishes in a cozy atmosphere, perfect for a Chinese cuisine lover looking for a moderately priced option.
+// No.2: ID: "ka1_lat2boQwLMsOCiwGiA", Name: "R&G Lounge", Address: "631 Kearny St, San Francisco, CA 94108", URL: "https://www.yelp.com/biz/r-and-g-lounge-san-francisco?adjust_creative=hoEj3TJi6gA5CoE0FY1TAw&utm_campaign=yelp_api_v3&utm_medium=api_v3_business_search&utm_source=hoEj3TJi6gA5CoE0FY1TAw", ImageURL: "https://s3-media1.fl.yelpcdn.com/bphoto/aA3LSmTyue6Yyz-C3cUnNA/o.jpg", Rating: "3.7", ReviewCount: "5045". Reason: R&G Lounge is a popular spot known for its Cantonese cuisine and seafood dishes, providing a diverse menu at a reasonable price point, ideal for those seeking a Chinese dining experience.
+// No.3: ID: "VYd8UzwlwmX8Db5umNHNig", Name: "Hong Kong Lounge", Address: "5322 Geary Blvd, San Francisco, CA 94121", URL: "https://www.yelp.com/biz/hong-kong-lounge-san-francisco?adjust_creative=hoEj3TJi6gA5CoE0FY1TAw&utm_campaign=yelp_api_v3&utm_medium=api_v3_business_search&utm_source=hoEj3TJi6gA5CoE0FY1TAw", ImageURL: "https://s3-media1.fl.yelpcdn.com/bphoto/yEhj3x-tSt3FabfDezzkgA/o.jpg", Rating: "3.7", ReviewCount: "1893". Reason: Hong Kong Lounge is a go-to spot for Cantonese and seafood dishes, offering a wide selection of options with consistent quality and reasonable prices for a satisfying Chinese dining experience.`;
+
             // Parse text API response and display top 3 restaurants
             const top3Restaurants = parseTop3Restaurants(textResponse);
+            console.log(top3Restaurants)
             displayRestaurantCards(top3Restaurants);
         }
 
@@ -287,48 +292,87 @@
         //     // post request for /api/favorites
         // }
 
-        function isRestaurantFavorite(rest) {
-            // get request for /api/favorites
-            const response = fetch(`/api/favorites/`, {
+        async function removeFavorite(rest_id) {
+            const response = await fetch(`/api/favorites`, {
+                method: "DELETE",
+                headers: {
+                "Content-Type": "application/json",
+                },
+                body: JSON.stringify({'restaurant_id': rest_id}),
+            })
+            return await response.json();
+        }
+
+        async function addFavorite(rest_id) {
+            const response = await fetch(`/api/favorites`, {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json",
+                },
+                body: JSON.stringify({'restaurant_id': rest_id}),
+            })
+            return await response.json();
+        }
+
+        async function isRestaurantFavorite(rest_id) {
+            const response = await fetch(`/api/favorites`, {
                 method: "GET",
                 headers: {
                 "Content-Type": "application/json",
                 },
             })
-            console.log(response.json());
-
+            const faved_rests = (await response.json());
+            return faved_rests.includes(rest_id);
         }
 
         function displayRestaurantCards(restaurants) {
             const restaurantCardsDiv = document.getElementById("restaurantCards");
-            restaurants.forEach((restaurant, index) => {
+            restaurants.forEach(async (restaurant, index) => {
                 const card = document.createElement("div");
                 card.className = "result-card";
                 card.style.height = "500px"
                 card.innerHTML = `
-                    <div class="result-card-image" style="background-image: url(${restaurant.imgurl});"><i class="fa fa-star"></i></div>
+                    <div class="result-card-image" style="background-image: url(${restaurant.imgurl});"><i id="fav-star" class="fa fa-star-o"></i></div>
                     <div class="result-card-desc">
                         <h1><a target='_blank' style='color: inherit;' href="${restaurant.url}">${restaurant.name}</a> </h1>
                         <h2>${restaurant.address}</h2>
                         <div class="stars-container">
-                    <i class="fa fa-star" style="display: none;"></i>
-                    <i class="fa fa-star" style="display: none;"></i>
-                    <i class="fa fa-star" style="display: none;"></i>
-                    <i class="fa fa-star" style="display: none;"></i>
-                    <i class="fa fa-star" style="display: none;"></i>
+                    <i class="fa fa-star rating-star" style="display: none;"></i>
+                    <i class="fa fa-star rating-star" style="display: none;"></i>
+                    <i class="fa fa-star rating-star" style="display: none;"></i>
+                    <i class="fa fa-star rating-star" style="display: none;"></i>
+                    <i class="fa fa-star rating-star" style="display: none;"></i>
                     <p class="stars-counter">${restaurant.rating} (${restaurant.rcount})</p>
                 </div>
                         <h3>${restaurant.reason}</h3>
                     </div>
                 `;
                 // add appropriate amount of stars
-                const stars = card.querySelectorAll('.fa-star');
+                const stars = card.querySelectorAll('.rating-star');
                 const rating = parseFloat(restaurant.rating);
                 const fullStars = Math.round(rating);
 
-                for (let i = 0; i <= fullStars; i++) {
+                for (let i = 0; i < fullStars; i++) {
                     stars[i].style.display = 'block';
                 }
+                const favStar = card.querySelector('#fav-star');
+                if (await isRestaurantFavorite(restaurant.id)) {
+                    favStar.classList.remove('fa-star-o');
+                    favStar.classList.add('fa-star');
+
+                }
+                favStar.addEventListener('click', () => {
+                    if (favStar.classList.contains('fa-star-o')) {
+                        favStar.classList.remove('fa-star-o');
+                        favStar.classList.add('fa-star');
+                        addFavorite(restaurant.id);
+                    } else {
+                        favStar.classList.remove('fa-star');
+                        favStar.classList.add('fa-star-o');
+                        removeFavorite(restaurant.id);
+                    }
+                });
+
                 
                 restaurantCardsDiv.appendChild(card);
             });
