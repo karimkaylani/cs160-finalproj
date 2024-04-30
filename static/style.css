@@ -206,6 +206,7 @@ section .user-groups {
     background-color: var(--secondary);
     margin-right: 1em;
     margin-bottom: 1em;
+    padding: 1em;
 
     display: grid;
     grid-template-columns: 1fr;

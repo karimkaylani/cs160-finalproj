@@ -187,18 +187,18 @@ def add_favorite():
     required_args = ['restaurant_id']
     if args is None or not all(arg in args for arg in required_args):
         return f"Please supply all required arguments\n{required_args}", 404
-    favorites = supabase.table("favorites").select("favorites").eq("user_id", id).execute()
-    if favorites.data is None:
+    favorites = supabase.table("favorites").select("favorites").eq("user_id", id).limit(1).execute()
+    if not favorites.data:
         favorites = []
     else:
-        favorites = favorites.data
+        favorites = json.loads(favorites.data[0]['favorites'])
     if args['restaurant_id'] in favorites:
         return "Restaurant already in favorites", 400
     favorites.append(args['restaurant_id'])
     favorite = supabase.table("favorites").upsert(
-        {"user_id": id, "restaurant_id": favorites}
+        {"user_id": id, "favorites": json.dumps(favorites)}
     ).execute()
-    return jsonify(favorite)
+    return jsonify(favorites)
 
 @app.route("/api/favorites", methods=["GET"])
 def get_favorites():
@@ -206,10 +206,10 @@ def get_favorites():
     if not data:
         return "User not authenticated", 401
     id = data.user.id
-    favorites = supabase.table("favorites").select("favorites").eq("user_id", id).execute()
+    favorites = supabase.table("favorites").select("favorites").eq("user_id", id).limit(1).execute()
     if favorites.data is None:
-        return "No favorites found", 404
-    return jsonify(favorites.data)
+        return jsonify([])
+    return jsonify(favorites.data[0]['favorites'])
 
 @app.route("/api/favorites", methods=["DELETE"])
 def remove_favorite():
@@ -222,16 +222,16 @@ def remove_favorite():
     if args is None or not all(arg in args for arg in required_args):
         return f"Please supply all required arguments\n{required_args}", 404
     favorites = supabase.table("favorites").select("favorites").eq("user_id", id).execute()
-    if favorites.data is None:
+    if not favorites.data:
         return "No favorites found", 404
-    favorites = favorites.data
+    favorites = json.loads(favorites.data[0]['favorites'])
     if args['restaurant_id'] not in favorites:
         return "Restaurant not in favorites", 400
     favorites.remove(args['restaurant_id'])
     favorite = supabase.table("favorites").upsert(
-        {"user_id": id, "restaurant_id": favorites}
+        {"user_id": id, "favorites": json.dumps(favorites)}
     ).execute()
-    return jsonify(favorite)
+    return jsonify(favorites)
 
 @app.route("/api/user", methods=["GET"])
 def get_current_user():
