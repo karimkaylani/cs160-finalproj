@@ -40,6 +40,9 @@
         const addButton = document.querySelector('.user-groups-options .fa-plus');
         addButton.addEventListener('click', promptAddUser);
 
+        const saveGroupButton = document.querySelector('.user-groups-options .fa-save');
+        saveGroupButton.addEventListener('click', promptGroupName);
+
         let currentMembers = []
         let currentPreferences = {}
         window.onload = async function() {
@@ -98,6 +101,32 @@
             createUserCard(user[0].name, user[0].avatar);
             console.log(await getAllPreferences());
         }
+
+        async function promptGroupName() {
+            const name = prompt("Enter the name of this group:");
+            if (name.length === 0) {
+                alert("Invalid name.");
+            } else {
+                saveGroup(name);
+            }
+        }
+
+        async function saveGroup(name){
+            try {
+            const response = await fetch("/api/groups", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({name: name, members: currentMembers}),
+        });
+
+            } catch (error) {
+                console.error('Save Group Error:', error);
+            }
+        }
+
+        
 
         async function getCurrentUser() {
             const response = await fetch("/api/user", {

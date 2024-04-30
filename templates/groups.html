@@ -5,6 +5,26 @@
     <h2 class="mb-4">Groups</h2>
     <div id="groupsList" class="list-group">
     </div>
+
+    <div class="modal fade" id="editGroupModal" tabindex="-1" aria-labelledby="editGroupModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="editGroupModalLabel">Edit Group Members</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+            <ul id="groupMembersList" class="list-group">
+
+            </ul>
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+        </div>
+    </div>
+  
     
 </div>
 
@@ -44,11 +64,60 @@ function createGroupElement(group) {
     `;
     return groupDiv;
 }
-/*
+
+
 function editGroup(groupId) {
-    
+    fetch(`/api/groups/${groupId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then(response => response.json())
+      .then(group => {
+          const groupMembersList = document.getElementById('groupMembersList');
+          groupMembersList.innerHTML = ''; 
+          group.members.forEach(member => {
+              const memberItem = document.createElement('li');
+              memberItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+              memberItem.setAttribute('data-member-name', member.name);
+              memberItem.innerHTML = `
+                  <img src="${member.profilePic}" alt="${member.name}" class="rounded-circle" width="50" height="50">
+                  <span>${member.name}</span>
+                  <button class="btn btn-danger btn-sm" onclick="removeMember('${groupId}', '${member.name}')">Remove</button>
+              `;
+              groupMembersList.appendChild(memberItem);
+          });
+      });
+
+    const editGroupModal = new bootstrap.Modal(document.getElementById('editGroupModal'), {
+        keyboard: false
+    });
+    editGroupModal.show();
 }
-*/
+
+function removeMember(groupId, memberName) {
+    const groupMembersList = document.getElementById('groupMembersList');
+    const updatedMembers = Array.from(groupMembersList.children)
+                                .filter(item => item.getAttribute('data-member-name') !== memberName)
+                                .map(item => item.getAttribute('data-member-name'));
+
+    fetch(`/api/groups`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ group_id: groupId, members: updatedMembers })
+    }).then(response => {
+        if (response.ok) {
+            document.querySelector(`[data-member-name="${memberName}"]`).remove();
+        } else {
+            alert('Could not remove the member. Please try again.');
+        }
+    }).catch(error => {
+        console.error('Failed to update the group:', error);
+    });
+}
+
 function renameGroup(groupId) {
     console.log('Renaming group', groupId);
     const newName = prompt('Enter new group name:');
