@@ -1,12 +1,10 @@
 {% extends 'base.html' %} {% block content %}
 
 <nav>
-    <div></div>
     <div class="logo-container">
         <img src="{{ url_for('static', filename='images/palate_pic.png') }}" alt="Palate Logo" />
         <h1>&nbsp;palate</h1>
     </div>
-    <a style='color: inherit; text-decoration: none' href="/preferences"><div class="user-options-container"><i class="fa fa-gear"></i></div></a>
 </nav>
 
 <section>
@@ -16,15 +14,20 @@
 
 
     <div class="user-groups">
+        <div class="user-location">
+            <i class="fa fa-map-marker" id="find-me"></i>
+            <p id="status"></p>
+        </div>
         <div class="selected-users">
         </div>
         <div class="user-groups-options">
             <i class="fa fa-plus"></i>
             <i class="fa fa-group"></i>
             <i class="fa fa-save"></i>
-            <i class="fa fa-map-marker" id="find-me"></i>
-            <p id="status"></p>
-            <a id="map-link" target="_blank" class="weather-date"></a>
+        </div>
+        <div id='open-switch' class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault">
+            <label class="form-check-label" for="flexSwitchCheckDefault">Restaurants Must Be Open</label>
         </div>
         <div class="refresh-options">
             <button disabled="true" type="button" class="button">
@@ -71,9 +74,10 @@
         let currentRestaurants = []
         let latitude = 0;
         let longitude = 0;
+        let user = undefined;
         
         window.onload = async function() {
-            const user = await getCurrentUser();
+            user = await getCurrentUser();
             createUserCard(user.name, user.avatar);
             currentMembers.push(user.user_id);
             currentPreferences = await getAllPreferences()
@@ -99,12 +103,21 @@
                 const status = document.querySelector("#status");
                 const mapLink = document.querySelector("#map-link");
 
-                // mapLink.href = "";
-                // mapLink.textContent = "";
-
                 function success(position) {
                     const latitude = position.coords.latitude;
                     const longitude = position.coords.longitude;
+
+                    //https://nominatim.openstreetmap.org/reverse?lat=<value>&lon=<value>&<params>
+                    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const city = data.address.city;
+                            const state = data.address.state;
+                            status.textContent = `${city}, ${state}`;
+                        })
+                        .catch(error => {
+                            console.error("Error:", error);
+                        });
 
                     status.textContent = "";
                     // mapLink.href = `https://www.openstreetmap.org/#map=18/${latitude}/${longitude}`;
@@ -234,15 +247,17 @@
                 <div class="user-card-name"><p>${name}</p></div>
             `;
             // add remove user icon
-            const removeIcon = document.createElement('i');
-            removeIcon.className = 'fa fa-times';
-            removeIcon.addEventListener('click', () => {
-                userCard.remove();
-                currentMembers = currentMembers.filter(member => member !== name);
-            });
-            removeIcon.style.cursor = 'pointer';
-            removeIcon.style.paddingLeft = '10px';
-            userCard.appendChild(removeIcon);
+            if (name !== user.name) {
+                const removeIcon = document.createElement('i');
+                removeIcon.className = 'fa fa-times';
+                removeIcon.addEventListener('click', () => {
+                    userCard.remove();
+                    currentMembers = currentMembers.filter(member => member !== name);
+                });
+                removeIcon.style.cursor = 'pointer';
+                removeIcon.style.paddingLeft = '10px';
+                userCard.appendChild(removeIcon);
+            }
             selectedUsers.appendChild(userCard);
         }
 
@@ -320,8 +335,12 @@
         }
 
         async function callFoodApi(prefs) {
-            console.log(latitude, longitude)
-            const url = `https://api.yelp.com/v3/businesses/search?term=restaurant&latitude=${latitude}&longitude=${longitude}&radius=${getMeters(prefs.max_distance)}&price=${getPreferredPrice(prefs.preferred_price)}&limit=30`;
+            const openSwitch = document.getElementById('open-switch');
+            const open = openSwitch.querySelector('input').checked;
+            let url = `https://api.yelp.com/v3/businesses/search?term=restaurant&latitude=${latitude}&longitude=${longitude}&radius=${getMeters(prefs.max_distance)}&price=${getPreferredPrice(prefs.preferred_price)}&limit=30`;
+            if (open) {
+                url += "&open_now=true";
+            }
             
             const response = await fetch(`/api/yelp_search?url=${encodeURIComponent(url)}`)
             return await response.json();

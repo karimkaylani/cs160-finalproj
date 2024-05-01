@@ -107,7 +107,7 @@ nav .logo-container {
 }
 
 nav {
-    width: 100%;
+    width: 80%;
     display: grid;
     grid-template-columns: var(--space) [ini] 15em [mid1] 1fr [mid2] 15em [end] var(--space);
     grid-template-rows: 1fr;
@@ -121,7 +121,37 @@ nav .user-options-container {
     grid-column-end: end;
 }
 
-nav .user-options-container i, .user-groups-options i {
+.user-location {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: row;
+    margin-bottom: 6em;
+}
+
+.user-location p {
+    margin-left: 1em;
+    margin-top: 1em;
+}
+
+.form-check .form-check-input:checked {
+    background-color: var(--tertiary);
+    border-color: var(--tertiary);
+    border: none;
+}
+
+
+.form-check {
+    margin-top: 1em;
+    margin-left: 1em;
+    margin-bottom: 1em;
+}
+
+#find-me {
+    background-color: var(--tertiary);
+}
+
+nav .user-options-container i, .user-groups-options i, #find-me {
     padding: 1em;
     border-radius: 50%;
     cursor: pointer;
@@ -181,12 +211,12 @@ section .user-groups {
     padding-left: 0.5em;
     height: 100%;
     width: calc(100% - 4.5em);
+    margin-top: 0.5em;
+    font-size: 20px;
 
     display: flex;
     justify-content: flex-start;
     align-items: center;
-
-    background-color: white;
 }
 
 .user-card .user-card-image {
