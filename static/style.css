@@ -139,7 +139,7 @@ section {
     margin-top: 1em;
 }
 
-section .user-results {
+.user-results {
     grid-column-start: ini;
     grid-column-end: mid;
 
