@@ -221,7 +221,7 @@ def get_favorites():
         return "User not authenticated", 401
     id = data.user.id
     favorites = supabase.table("favorites").select("favorites").eq("user_id", id).limit(1).execute()
-    if favorites.data is None:
+    if not favorites.count:
         return jsonify([])
     id_list = json.loads(favorites.data[0]['favorites'])
     res = []
@@ -241,7 +241,7 @@ def remove_favorite():
     if args is None or not all(arg in args for arg in required_args):
         return f"Please supply all required arguments\n{required_args}", 404
     favorites = supabase.table("favorites").select("favorites").eq("user_id", id).execute()
-    if not favorites.data:
+    if not favorites.count:
         return "No favorites found", 404
     favorites = json.loads(favorites.data[0]['favorites'])
     if args['restaurant_id'] not in favorites:
@@ -275,7 +275,7 @@ def search_user(name):
     users = users.data
     # find users with name like name, case-sensitive
     users = [user for user in users if name.lower() in user['name'].lower()]
-    if not users:
+    if not users.count:
         return "No users found", 404
     return jsonify(users)
 
@@ -302,7 +302,7 @@ def get_search():
 @app.route("/api/restaurants/<id>", methods=["GET"])
 def get_restaurant(id):
     restaurant = supabase.table("restaurants").select("*").eq("restaurant_id", id).limit(1).execute()
-    if restaurant.data is None:
+    if not restaurant.count:
         return "Restaurant not found", 404
     return jsonify(restaurant.data[0])
 

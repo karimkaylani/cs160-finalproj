@@ -3,7 +3,9 @@
 {% block content %}
 <div class="container mt-5">
     <h2 class="mb-4">Favorites</h2>
-    <div id="favoritesList" class="user-results-favorites">
+    <p id="loadHeader" class="mb-4">Loading your groups ...</p>
+    <div class="user-results" id="favoritesList">
+    </div>
 
     </div>
 </div>
@@ -24,6 +26,13 @@ function loadFavorites() {
       .then(favorites => {
           const favoritesList = document.getElementById('favoritesList');
           favoritesList.innerHTML = ''; 
+          const loadHeader = document.getElementById('loadHeader');
+          loadHeader.remove();
+          if (favorites.length === 0) {
+              const noFavorites = document.createElement('p');
+              noFavorites.innerText = 'You have no favorites yet!';
+              favoritesList.appendChild(noFavorites);
+          }
           favorites.forEach(favorite => {
               const card = createFavoriteCard(favorite);
               favoritesList.appendChild(card);

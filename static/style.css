@@ -151,7 +151,7 @@ section .user-results {
     flex-wrap: wrap;
 }
 
-section .user-results-favorites {
+.user-results-favorites {
     grid-column-start: ini;
     grid-column-end: mid;
 

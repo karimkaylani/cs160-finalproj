@@ -1,154 +1,190 @@
-{% extends 'base.html' %}
-
-{% block content %}
-
+{% extends 'base.html' %} {% block content %}
 
 <div class="container my-5">
-    <h2 class="text-center mb-4">Preferences Quiz</h2>
-    
-    <form id="preferencesForm">
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <label for="preferredPrice" class="form-label">Preferred Price</label>
-                <select id="preferredPrice" name="preferred_price" class="form-select">
-                    <option value="$">$ - Inexpensive</option>
-                    <option value="$$">$$ - Moderately Expensive</option>
-                    <option value="$$$">$$$ - Expensive</option>
-                    <option value="$$$$">$$$$ - Very Expensive</option>
-                </select>
-            </div>
-            <div class="col-md-6">
-                <label for="maxDistance" class="form-label">Max Distance (miles)</label>
-                <input type="number" id="maxDistance" name="max_distance" class="form-control">
-            </div>
-        </div>
-        
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <label for="cuisinePreferences" class="form-label">Cuisine Preferences</label>
-                <select id="cuisinePreferences" name="preferred_cuisine" class="form-select" multiple>
-                    <option value="American">American</option>
-                    <option value="Chinese">Chinese</option>
-                    <option value="Cuban">Cuban</option>
-                    <option value="Greek">Greek</option>
-                    <option value="Indian">Indian</option>
-                    <option value="Italian">Italian</option>
-                    <option value="Japanese">Japanese</option>
-                    <option value="Korean">Korean</option>
-                    <option value="Mexican">Mexican</option>
-                    <option value="Thai">Thai</option>
-                    <option value="Vietnamese">Vietnamese</option>
-                </select>
-            </div>
-            <div class="col-md-6">
-                <label for="dietaryRestrictions" class="form-label">Dietary Restrictions</label>
-                <select id="dietaryRestrictions" name="dietary_restrictions" class="form-select" multiple>
-                    <option value="Nut Allergy">Nut Allergy</option>
-                    <option value="Gluten-Free">Gluten-Free</option>
-                    <option value="Vegetarian">Vegetarian</option>
-                    <option value="Vegan">Vegan</option>
-                    <option value="Kosher">Kosher</option>
-                    <option value="Seafood Allergy">Seafood Allergy</option>
-                    <option value="Dairy-Free">Dairy-Free</option>
-                </select>
-            </div>
-        </div>
-        
-        <div class="mb-3">
-            <label for="otherPreferences" class="form-label">Other Preferences</label>
-            <textarea id="otherPreferences" name="other" class="form-control" ></textarea>
-        </div>
-        
-        <div class="d-grid">
-            <button id="savePreferencesButton" class="button" type="submit">Save</button>
-        </div>
-    </form>
+  <h2 class="text-center mb-4">Preferences Quiz</h2>
+
+  <form id="preferencesForm">
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label for="preferredPrice" class="form-label">Preferred Price</label>
+        <select id="preferredPrice" name="preferred_price" class="form-select">
+          <option value="$">$ - Inexpensive</option>
+          <option value="$$">$$ - Moderately Expensive</option>
+          <option value="$$$">$$$ - Expensive</option>
+          <option value="$$$$">$$$$ - Very Expensive</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label for="maxDistance" class="form-label">Max Distance (miles)</label>
+        <input
+          type="number"
+          id="maxDistance"
+          name="max_distance"
+          class="form-control"
+        />
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label for="cuisinePreferences" class="form-label"
+          >Cuisine Preferences</label
+        >
+        <select
+          id="cuisinePreferences"
+          name="preferred_cuisine"
+          class="form-select"
+          multiple
+        >
+          <option value="American">American</option>
+          <option value="Chinese">Chinese</option>
+          <option value="Cuban">Cuban</option>
+          <option value="Greek">Greek</option>
+          <option value="Indian">Indian</option>
+          <option value="Italian">Italian</option>
+          <option value="Japanese">Japanese</option>
+          <option value="Korean">Korean</option>
+          <option value="Mexican">Mexican</option>
+          <option value="Thai">Thai</option>
+          <option value="Vietnamese">Vietnamese</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label for="dietaryRestrictions" class="form-label"
+          >Dietary Restrictions</label
+        >
+        <select
+          id="dietaryRestrictions"
+          name="dietary_restrictions"
+          class="form-select"
+          multiple
+        >
+          <option value="Nut Allergy">Nut Allergy</option>
+          <option value="Gluten-Free">Gluten-Free</option>
+          <option value="Vegetarian">Vegetarian</option>
+          <option value="Vegan">Vegan</option>
+          <option value="Kosher">Kosher</option>
+          <option value="Seafood Allergy">Seafood Allergy</option>
+          <option value="Dairy-Free">Dairy-Free</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="otherPreferences" class="form-label">Other Preferences</label>
+      <textarea
+        id="otherPreferences"
+        name="other"
+        class="form-control"
+      ></textarea>
+    </div>
+
+    <div class="d-grid">
+      <button id="savePreferencesButton" class="button" type="submit">
+        Save
+      </button>
+    </div>
+  </form>
 </div>
 
 <script>
-    const savePreferencesButton = document.getElementById('savePreferencesButton');
-    savePreferencesButton.addEventListener('click', submitPreferences);
+  var options = [].slice.call(document.querySelectorAll("option"));
 
-    async function submitPreferences() {
-        const form = document.getElementById('preferencesForm');
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
-        data.preferred_cuisine = formData.getAll('preferred_cuisine');
-        data.dietary_restrictions = formData.getAll('dietary_restrictions');        
+  options.forEach(function (element) {
+    // console.log("element", element);
+    element.addEventListener(
+      "mousedown",
+      function (e) {
+        e.preventDefault();
+        element.parentElement.focus();
+        this.selected = !this.selected;
+        return false;
+      },
+      false
+    );
+  });
+  const savePreferencesButton = document.getElementById(
+    "savePreferencesButton"
+  );
+  savePreferencesButton.addEventListener("click", submitPreferences);
 
-        try {
-        const response = await fetch("/api/preferences", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
-        });
+  async function submitPreferences() {
+    const form = document.getElementById("preferencesForm");
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    data.preferred_cuisine = formData.getAll("preferred_cuisine");
+    data.dietary_restrictions = formData.getAll("dietary_restrictions");
 
-        
-        } catch (error) {
-            console.error('Error:', error);
-        }
+    try {
+      const response = await fetch("/api/preferences", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+    } catch (error) {
+      console.error("Error:", error);
     }
+  }
 
-    async function getAndSetPreferences() {
-        try {
-            const response = await fetch("/api/preferences", {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
+  async function getAndSetPreferences() {
+    try {
+      const response = await fetch("/api/preferences", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-            if (response.ok) {
-                const data = await response.json();
-                setFormValues(data.preferences);
-            } else {
-                console.error('Error');
-            }
-        } catch (error) {
-            console.error('Error', error);
-        }
+      if (response.ok) {
+        const data = await response.json();
+        setFormValues(data.preferences);
+      } else {
+        console.error("Error");
+      }
+    } catch (error) {
+      console.error("Error", error);
     }
+  }
 
-    function setFormValues(preferences) {
-        if (!preferences) return;
+  function setFormValues(preferences) {
+    if (!preferences) return;
 
-        const form = document.getElementById('preferencesForm');
+    const form = document.getElementById("preferencesForm");
 
-        if (preferences.preferred_price) {
-            form.elements['preferred_price'].value = preferences.preferred_price;
+    if (preferences.preferred_price) {
+      form.elements["preferred_price"].value = preferences.preferred_price;
+    }
+    if (preferences.max_distance) {
+      form.elements["max_distance"].value = preferences.max_distance;
+    }
+    if (preferences.preferred_cuisine) {
+      const cuisineSelect = form.elements["preferred_cuisine"];
+      preferences.preferred_cuisine.forEach((cuisine) => {
+        for (const option of cuisineSelect.options) {
+          if (option.value === cuisine) {
+            option.selected = true;
+          }
         }
-        if (preferences.max_distance) {
-            form.elements['max_distance'].value = preferences.max_distance;
+      });
+    }
+    if (preferences.dietary_restrictions) {
+      const dietarySelect = form.elements["dietary_restrictions"];
+      preferences.dietary_restrictions.forEach((restriction) => {
+        for (const option of dietarySelect.options) {
+          if (option.value === restriction) {
+            option.selected = true;
+          }
         }
-        if (preferences.preferred_cuisine) {
-            const cuisineSelect = form.elements['preferred_cuisine'];
-            preferences.preferred_cuisine.forEach((cuisine) => {
-                for (const option of cuisineSelect.options) {
-                    if (option.value === cuisine) {
-                        option.selected = true;
-                    }
-                }
-            });
-        }
-        if (preferences.dietary_restrictions) {
-            const dietarySelect = form.elements['dietary_restrictions'];
-            preferences.dietary_restrictions.forEach((restriction) => {
-                for (const option of dietarySelect.options) {
-                    if (option.value === restriction) {
-                        option.selected = true;
-                    }
-                }
-            });
-        }
-        if (preferences.other) {
-            form.elements['other'].value = preferences.other;
-        }
-}
+      });
+    }
+    if (preferences.other) {
+      form.elements["other"].value = preferences.other;
+    }
+  }
 
-    getAndSetPreferences()
-
+  getAndSetPreferences();
 </script>
 
 {% endblock %}
