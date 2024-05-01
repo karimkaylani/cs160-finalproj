@@ -133,16 +133,16 @@ def get_preferences():
         return "User not authenticated", 401
     id = data.user.id
     prefs = supabase.table("preferences").select("preferences").eq("user_id", id).limit(1).execute()
-    prefs = prefs.data[0]
-    if prefs is None:
+    if not prefs.data:
         return "No preferences set", 404
+    prefs = prefs.data[0]
     return jsonify(prefs)
 
 @app.route("/api/preferences/<user_id>", methods=["GET"])
 def get_user_preferences(user_id):
     prefs = supabase.table("preferences").select("preferences").eq("user_id", user_id).limit(1).execute()
     prefs = prefs.data[0]
-    if prefs is None:
+    if not prefs.data:
         return "No preferences set", 404
     return jsonify(prefs)
 
@@ -187,7 +187,7 @@ def delete_group(group_id):
 @app.route("/api/groups/<group_id>", methods=["GET"])
 def get_group(group_id):
     group = supabase.table("groups").select("*").eq("id", group_id).limit(1).execute()
-    if group.data is None:
+    if not group.data:
         return "Group not found", 404
     return jsonify(group.data[0])
 
@@ -221,7 +221,7 @@ def get_favorites():
         return "User not authenticated", 401
     id = data.user.id
     favorites = supabase.table("favorites").select("favorites").eq("user_id", id).limit(1).execute()
-    if not favorites.count:
+    if not favorites.data == 0:
         return jsonify([])
     id_list = json.loads(favorites.data[0]['favorites'])
     res = []
@@ -241,7 +241,7 @@ def remove_favorite():
     if args is None or not all(arg in args for arg in required_args):
         return f"Please supply all required arguments\n{required_args}", 404
     favorites = supabase.table("favorites").select("favorites").eq("user_id", id).execute()
-    if not favorites.count:
+    if not favorites.data:
         return "No favorites found", 404
     favorites = json.loads(favorites.data[0]['favorites'])
     if args['restaurant_id'] not in favorites:
@@ -275,7 +275,7 @@ def search_user(name):
     users = users.data
     # find users with name like name, case-sensitive
     users = [user for user in users if name.lower() in user['name'].lower()]
-    if not users.count:
+    if not users.data:
         return "No users found", 404
     return jsonify(users)
 
@@ -302,7 +302,7 @@ def get_search():
 @app.route("/api/restaurants/<id>", methods=["GET"])
 def get_restaurant(id):
     restaurant = supabase.table("restaurants").select("*").eq("restaurant_id", id).limit(1).execute()
-    if not restaurant.count:
+    if not restaurant.data:
         return "Restaurant not found", 404
     return jsonify(restaurant.data[0])
 
