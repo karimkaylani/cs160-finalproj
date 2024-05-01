@@ -247,7 +247,7 @@ def remove_favorite():
     if args['restaurant_id'] not in favorites:
         return "Restaurant not in favorites", 400
     favorites.remove(args['restaurant_id'])
-    favorite = supabase.table("favorites").upsert(
+    supabase.table("favorites").upsert(
         {"user_id": id, "favorites": json.dumps(favorites)}
     ).execute()
     return jsonify(favorites)
@@ -273,10 +273,10 @@ def search_user(name):
     # get all users
     users = supabase.table("users").select("*").execute()
     users = users.data
+    if not users:
+        return "No users found", 404
     # find users with name like name, case-sensitive
     users = [user for user in users if name.lower() in user['name'].lower()]
-    if not users.data:
-        return "No users found", 404
     return jsonify(users)
 
 def save_search(url, results):
