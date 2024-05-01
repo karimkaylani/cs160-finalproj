@@ -18,6 +18,10 @@ def home():
         return redirect("/login")
     if not data:
         return redirect("/login")
+    id = data.user.id
+    prefs = supabase.table("preferences").select("preferences").eq("user_id", id).limit(1).execute()
+    if not prefs.data:
+        return redirect("/preferences")
     return render_template("index.html")
 
 @app.route("/login")
