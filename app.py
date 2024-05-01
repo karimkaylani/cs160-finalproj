@@ -221,7 +221,7 @@ def get_favorites():
         return "User not authenticated", 401
     id = data.user.id
     favorites = supabase.table("favorites").select("favorites").eq("user_id", id).limit(1).execute()
-    if not favorites.data == 0:
+    if not favorites.data:
         return jsonify([])
     id_list = json.loads(favorites.data[0]['favorites'])
     res = []
