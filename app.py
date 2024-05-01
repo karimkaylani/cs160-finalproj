@@ -141,9 +141,9 @@ def get_preferences():
 @app.route("/api/preferences/<user_id>", methods=["GET"])
 def get_user_preferences(user_id):
     prefs = supabase.table("preferences").select("preferences").eq("user_id", user_id).limit(1).execute()
-    prefs = prefs.data[0]
     if not prefs.data:
         return "No preferences set", 404
+    prefs = prefs.data[0]
     return jsonify(prefs)
 
 @app.route("/api/groups", methods=["GET"])
