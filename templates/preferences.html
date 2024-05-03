@@ -82,7 +82,7 @@
     </div>
 
     <div class="d-grid">
-      <button id="savePreferencesButton" class="button" type="submit">
+      <button id="savePreferencesButton" class="button">
         Save
       </button>
     </div>
@@ -110,7 +110,8 @@
   );
   savePreferencesButton.addEventListener("click", submitPreferences);
 
-  async function submitPreferences() {
+  async function submitPreferences(e) {
+    event.preventDefault();
     const form = document.getElementById("preferencesForm");
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
@@ -128,6 +129,7 @@
     } catch (error) {
       console.error("Error:", error);
     }
+    window.location.href = "/";
   }
 
   async function getAndSetPreferences() {
